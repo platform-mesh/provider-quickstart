@@ -1,0 +1,120 @@
+apiVersion: ui.platform-mesh.io/v1alpha1
+kind: ContentConfiguration
+metadata:
+  labels:
+    ui.platform-mesh.io/entity: core_platform-mesh_io_account
+    ui.platform-mesh.io/content-for: wildwest.platform-mesh.io
+  name: cowboys-ui
+spec:
+  inlineConfiguration:
+    content: |-
+      {
+          "name": "cowboys",
+          "luigiConfigFragment": {
+              "data": {
+                  "nodes": [
+                      {
+                          "pathSegment": "wildwest_platform-mesh_io_cowboys",
+                          "navigationContext": "wildwest_platform-mesh_io_cowboys",
+                          "label": "Cowboys",
+                          "icon": "person-placeholder",
+                          "order": 800,
+                          "entityType": "main.core_platform-mesh_io_account.core_namespace",
+                          "loadingIndicator": {
+                              "enabled": false
+                          },
+                          "keepSelectedForChildren": true,
+                          "url": "/assets/platform-mesh-portal-ui-wc.js#generic-list-view",
+                          "webcomponent": {
+                              "selfRegistered": true
+                          },
+                          "context": {
+                              "resourceDefinition": {
+                                  "group": "wildwest.platform-mesh.io",
+                                  "plural": "cowboys",
+                                  "singular": "cowboy",
+                                  "kind": "Cowboy",
+                                  "scope": "Namespaced",
+                                  "namespace": null,
+                                  "readyCondition": {
+                                    "jsonPathExpression": "status.result",
+                                    "property": ["status.result"]
+                                  },
+                                  "ui": {
+                                      "logoUrl": "https://www.kcp.io/icons/logo.svg",
+                                      "listView": {
+                                          "fields": [
+                                              {
+                                                  "label": "Name",
+                                                  "property": "metadata.name"
+                                              },
+                                              {
+                                                  "label": "Intent",
+                                                  "property": "spec.intent"
+                                              },
+                                              {
+                                                  "label": "Result",
+                                                  "property": "status.result"
+                                              }
+                                          ]
+                                      },
+                                      "detailView": {},
+                                      "createView": {
+                                          "fields": [
+                                              {
+                                                  "label": "Name",
+                                                  "property": "metadata.name",
+                                                  "required": true
+                                              },
+                                              {
+                                                  "label": "Intent",
+                                                  "property": "spec.intent",
+                                                  "required": false
+                                              }
+                                          ]
+                                      }
+                                  }
+                              }
+                          },
+                          "children": [
+                            {
+                                "pathSegment": ":cowboyId",
+                                "hideFromNav": true,
+                                "keepSelectedForChildren": false,
+                                "defineEntity": {
+                                    "id": "wildwest_platform-mesh_io_cowboy",
+                                    "contextKey": "cowboyId",
+                                    "graphqlEntity": {
+                                        "group": "wildwest_platform-mesh_io",
+                                        "kind": "Cowboy",
+                                        "query": "{ metadata { name } }"
+                                    }
+                                },
+                                "context": {
+                                    "accountId": ":accountId",
+                                    "namespaceId": ":namespaceId",
+                                    "resourceId": ":cowboyId"
+                                }
+                            }
+                          ]
+                      },
+                      {
+                        "entityType": "main.core_platform-mesh_io_account.core_namespace.wildwest_platform-mesh_io_cowboy",
+                        "pathSegment": "dashboard",
+                        "label": "Dashboard",
+                        "url": "/assets/platform-mesh-portal-ui-wc.js#generic-detail-view",
+                        "webcomponent": {
+                          "selfRegistered": true
+                        },
+                        "defineEntity": {
+                            "id": "dashboard"
+                        },
+                        "compound": {
+                            "children": []
+                        }
+                      }
+                  ]
+              }
+          }
+      }
+    contentType: json
