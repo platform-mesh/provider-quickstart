@@ -1,0 +1,14 @@
+apiVersion: apis.kcp.io/v1alpha2
+kind: APIExport
+metadata:
+  labels:
+    ui.platform-mesh.io/content-for: wildwest.platform-mesh.io
+  name: wildwest.platform-mesh.io
+spec:
+  resources:
+  - group: wildwest.platform-mesh.io
+    name: cowboys
+    schema: v260123-6b19cba.cowboys.wildwest.platform-mesh.io
+    storage:
+      crd: {}
+status: {}

@@ -1,0 +1,21 @@
+apiVersion: ui.platform-mesh.io/v1alpha1
+kind: ProviderMetadata
+metadata:
+  name: wildwest.platform-mesh.io
+spec:
+  displayName: Wild West Provider
+  description: |
+    Example provider for Platform Mesh quickstart guides.
+    Provides Cowboys API for the Wild West.
+  contacts:
+  - displayName: Wild West Team
+    email: wildwest@platform-mesh.io
+    role: ["Maintainer"]
+  preferredSupportChannels:
+  - displayName: Wild West Support
+    url: https://github.com/platform-mesh/provider-quickstart
+  icon:
+    light:
+      data: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj4KICA8Y2lyY2xlIGN4PSIxMDAiIGN5PSIxMDAiIHI9IjkwIiBmaWxsPSIjOGI0NTEzIiAvPgogIDx0ZXh0IHg9IjEwMCIgeT0iMTE1IiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNTAiIGZvbnQtd2VpZ2h0PSJib2xkIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZmZmIj7wn6SFPC90ZXh0Pgo8L3N2Zz4K"
+    dark:
+      data: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj4KICA8Y2lyY2xlIGN4PSIxMDAiIGN5PSIxMDAiIHI9IjkwIiBmaWxsPSIjOGI0NTEzIiAvPgogIDx0ZXh0IHg9IjEwMCIgeT0iMTE1IiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNTAiIGZvbnQtd2VpZ2h0PSJib2xkIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZmZmIj7wn6SFPC90ZXh0Pgo8L3N2Zz4K"
