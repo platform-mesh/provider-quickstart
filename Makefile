@@ -73,7 +73,7 @@ run: fmt vet
 init: build-init
 	$(BUILD_DIR)/$(INIT_BINARY_NAME)
 
-## generate: Generate code (deepcopy, etc.) and KCP resources
+## generate: Generate code (deepcopy, etc.) and kcp resources
 .PHONY: generate
 generate: $(CONTROLLER_GEN) manifests apiresourceschemas
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./apis/..."

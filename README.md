@@ -1,12 +1,12 @@
 # Platform Mesh Provider Quickstart
 
-A quickstart template for building Platform Mesh providers. This repo demonstrates how to create a provider that exposes APIs through KCP and integrates with the Platform Mesh UI.
+A quickstart template for building Platform Mesh providers. This repo demonstrates how to create a provider that exposes APIs through kcp and integrates with the Platform Mesh UI.
 
 ## What This Repo Does
 
 This is an example "Wild West" provider that exposes a `Cowboys` API (`wildwest.platform-mesh.io`). It shows how to:
 
-1. **Define and export APIs via KCP** - Using `APIExport` and `APIResourceSchema` resources
+1. **Define and export APIs via kcp** - Using `APIExport` and `APIResourceSchema` resources
 2. **Register as a Platform Mesh provider** - Using `ProviderMetadata` to describe your provider
 3. **Configure UI integration** - Using `ContentConfiguration` to add navigation and views
 
@@ -52,7 +52,7 @@ The `ui.platform-mesh.io/content-for` label is critical - it associates your UI 
 ```
 ├── cmd/init/              # Bootstrap CLI tool
 ├── config/
-│   ├── kcp/               # KCP resources (APIExport, APIResourceSchema)
+│   ├── kcp/               # kcp resources (APIExport, APIResourceSchema)
 │   └── provider/          # Provider resources (ProviderMetadata, ContentConfiguration, RBAC)
 └── pkg/bootstrap/         # Bootstrap logic for applying resources
 ```
@@ -70,7 +70,7 @@ The `ui.platform-mesh.io/content-for` label is critical - it associates your UI 
    bin/wild-west-init
    ```
 
-This applies all KCP and provider resources to register your provider.
+This applies all kcp and provider resources to register your provider.
 
 ## Debugging
 
@@ -121,9 +121,9 @@ This project uses two key code generation tools:
 
 ### apigen
 
-[apigen](https://github.com/kcp-dev/sdk) is a KCP-specific tool that:
-- Converts standard Kubernetes **CRDs into APIResourceSchemas** for KCP
-- APIResourceSchemas are KCP's way of defining API types that can be exported via `APIExport`
+[apigen](https://github.com/kcp-dev/sdk) is a kcp-specific tool that:
+- Converts standard Kubernetes **CRDs into APIResourceSchemas** for kcp
+- APIResourceSchemas are kcp's way of defining API types that can be exported via `APIExport`
 - Takes CRDs from `config/crds/` and outputs APIResourceSchemas to `config/kcp/`
 
 **Generation flow:**

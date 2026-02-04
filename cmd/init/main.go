@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"os"
+	"time"
 
 	"github.com/spf13/pflag"
 
@@ -39,7 +40,9 @@ func main() {
 		klog.Fatal("--kubeconfig is required or set KUBECONFIG environment variable")
 	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
 	logger := klog.FromContext(ctx)
 
 	logger.Info("Loading kubeconfig", "path", kubeconfig)
