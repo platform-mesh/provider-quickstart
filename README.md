@@ -59,30 +59,52 @@ The `ui.platform-mesh.io/content-for` label is critical - it associates your UI 
 
 ## Usage
 
-1. Set your kubeconfig:
-   ```bash
-   export KUBECONFIG=/path/to/kcp/admin.kubeconfig
-   ```
+> **Important:** Providers must live in a dedicated workspace type within a separate tree. This means platform administrators must configure providers using the **admin kubeconfig**. Regular user kubeconfigs will not have the necessary permissions to create provider workspaces.
 
-2. Build and run the bootstrap:
-   ```bash
-   make build
-   bin/wild-west-init
-   ```
+### 1. Set Admin Kubeconfig
+
+You need the admin kubeconfig to create and manage provider workspaces:
+
+```bash
+export KUBECONFIG=/path/to/kcp/admin.kubeconfig
+```
+
+### 2. Create Provider Workspace Hierarchy
+
+Navigate to the root workspace and create the provider workspace structure:
+
+```bash
+# Navigate to root workspace
+kubectl ws use :
+
+# Create the providers parent workspace (if it doesn't exist)
+kubectl ws create providers --type=root:providers --enter --ignore-existing
+
+# Create your provider workspace
+kubectl ws create quickstart --type=root:provider --enter --ignore-existing
+```
+
+### 3. Bootstrap Provider Resources
+
+Build and run the bootstrap to register your provider:
+
+```bash
+make init
+```
 
 This applies all kcp and provider resources to register your provider.
 
 ## Debugging
 
-Assuming your organization is `bob` and provider account is `quickstart`:
+Assuming your provider workspace is `quickstart` under the `providers` tree:
 
 ### Check Marketplace Entries
 
 View your provider's marketplace entry (combines APIExport + ProviderMetadata):
 
 ```bash
-kubectl --server="https://localhost:8443/services/marketplace/clusters/root:orgs:bob:quickstart" get marketplaceentries -A
-kubectl --server="https://localhost:8443/services/marketplace/clusters/root:orgs:bob:quickstart" get marketplaceentries -A -o yaml
+kubectl --server="https://localhost:8443/services/marketplace/clusters/root:providers:quickstart" get marketplaceentries -A
+kubectl --server="https://localhost:8443/services/marketplace/clusters/root:providers:quickstart" get marketplaceentries -A -o yaml
 ```
 
 ### Check Content Configurations
@@ -90,23 +112,22 @@ kubectl --server="https://localhost:8443/services/marketplace/clusters/root:orgs
 View available API resources and content configurations:
 
 ```bash
-kubectl --server="https://localhost:8443/services/contentconfigurations/clusters/root:orgs:bob:quickstart" api-resources
-kubectl --server="https://localhost:8443/services/contentconfigurations/clusters/root:orgs:bob:quickstart" get contentconfigurations -A
-kubectl --server="https://localhost:8443/services/contentconfigurations/clusters/root:orgs:bob:quickstart" get contentconfigurations -A -o yaml
+kubectl --server="https://localhost:8443/services/contentconfigurations/clusters/root:providers:quickstart" api-resources
+kubectl --server="https://localhost:8443/services/contentconfigurations/clusters/root:providers:quickstart" get contentconfigurations -A
+kubectl --server="https://localhost:8443/services/contentconfigurations/clusters/root:providers:quickstart" get contentconfigurations -A -o yaml
 ```
 
 ### URL Pattern
 
 The server URL follows this pattern:
 ```
-https://<host>/services/<virtual-workspace>/clusters/root:orgs:<org>:<account>
+https://<host>/services/<virtual-workspace>/clusters/root:providers:<provider-workspace>
 ```
 
 Where:
 - `marketplace` - Virtual workspace for marketplace entries
 - `contentconfigurations` - Virtual workspace for UI content configurations
-- `<org>` - Your organization name (e.g., `bob`)
-- `<account>` - Your provider account name (e.g., `quickstart`)
+- `<provider-workspace>` - Your provider workspace name (e.g., `quickstart`)
 
 ## Code Generation Tools
 

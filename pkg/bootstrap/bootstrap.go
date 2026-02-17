@@ -26,6 +26,7 @@ import (
 	"io"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,18 +37,22 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 
+	configcontroller "github.com/platform-mesh/provider-quickstart/config/controller"
 	configkcp "github.com/platform-mesh/provider-quickstart/config/kcp"
 	configprovider "github.com/platform-mesh/provider-quickstart/config/provider"
 )
 
 // Bootstrap creates all provider resources from embedded YAML files.
-// It bootstraps kcp resources (APIResourceSchema, APIExport) and provider
-// resources (ProviderMetadata, ContentConfiguration, RBAC).
+// It bootstraps kcp resources (APIResourceSchema, APIExport), provider
+// resources (ProviderMetadata, ContentConfiguration, RBAC), and controller
+// resources (ServiceAccount, RBAC, kubeconfig Secret).
 func Bootstrap(ctx context.Context, config *rest.Config) error {
 	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
 	if err != nil {
@@ -57,6 +62,11 @@ func Bootstrap(ctx context.Context, config *rest.Config) error {
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return fmt.Errorf("failed to create dynamic client: %w", err)
+	}
+
+	kubeClient, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return fmt.Errorf("failed to create kubernetes client: %w", err)
 	}
 
 	cache := memory.NewMemCacheClient(discoveryClient)
@@ -76,7 +86,111 @@ func Bootstrap(ctx context.Context, config *rest.Config) error {
 		return fmt.Errorf("failed to bootstrap provider resources: %w", err)
 	}
 
+	// Bootstrap controller resources (ServiceAccount, RBAC)
+	logger.Info("Bootstrapping controller resources")
+	if err := bootstrapFS(ctx, dynamicClient, mapper, cache, configcontroller.FS); err != nil {
+		return fmt.Errorf("failed to bootstrap controller resources: %w", err)
+	}
+
+	// Create kubeconfig secret for controller
+	logger.Info("Creating controller kubeconfig secret")
+	if err := createControllerKubeconfigSecret(ctx, kubeClient, config); err != nil {
+		return fmt.Errorf("failed to create controller kubeconfig secret: %w", err)
+	}
+
 	logger.Info("Bootstrap completed successfully")
+	return nil
+}
+
+// createControllerKubeconfigSecret creates a Secret containing a kubeconfig
+// that the controller can use to connect to the workspace from outside.
+func createControllerKubeconfigSecret(ctx context.Context, client kubernetes.Interface, config *rest.Config) error {
+	logger := klog.FromContext(ctx)
+
+	// Wait for the service account token secret to be populated
+	var tokenSecret *corev1.Secret
+	err := wait.PollUntilContextTimeout(ctx, time.Second, 30*time.Second, true, func(ctx context.Context) (bool, error) {
+		secret, err := client.CoreV1().Secrets("default").Get(ctx, "wildwest-controller-token", metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				logger.V(2).Info("waiting for service account token secret to be created")
+				return false, nil
+			}
+			return false, err
+		}
+		if len(secret.Data["token"]) == 0 {
+			logger.V(2).Info("waiting for service account token to be populated")
+			return false, nil
+		}
+		tokenSecret = secret
+		return true, nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to wait for service account token: %w", err)
+	}
+
+	token := string(tokenSecret.Data["token"])
+	caCert := tokenSecret.Data["ca.crt"]
+
+	// Build kubeconfig pointing to this workspace
+	kubeconfig := clientcmdapi.Config{
+		Kind:       "Config",
+		APIVersion: "v1",
+		Clusters: map[string]*clientcmdapi.Cluster{
+			"workspace": {
+				Server:                   config.Host,
+				CertificateAuthorityData: caCert,
+			},
+		},
+		AuthInfos: map[string]*clientcmdapi.AuthInfo{
+			"controller": {
+				Token: token,
+			},
+		},
+		Contexts: map[string]*clientcmdapi.Context{
+			"workspace": {
+				Cluster:  "workspace",
+				AuthInfo: "controller",
+			},
+		},
+		CurrentContext: "workspace",
+	}
+
+	kubeconfigBytes, err := yaml.Marshal(kubeconfig)
+	if err != nil {
+		return fmt.Errorf("failed to marshal kubeconfig: %w", err)
+	}
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "wildwest-controller-kubeconfig",
+			Namespace: "default",
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"kubeconfig": kubeconfigBytes,
+		},
+	}
+
+	_, err = client.CoreV1().Secrets("default").Create(ctx, secret, metav1.CreateOptions{})
+	if err != nil {
+		if apierrors.IsAlreadyExists(err) {
+			logger.Info("kubeconfig secret already exists, updating")
+			existing, err := client.CoreV1().Secrets("default").Get(ctx, secret.Name, metav1.GetOptions{})
+			if err != nil {
+				return fmt.Errorf("failed to get existing secret: %w", err)
+			}
+			secret.ResourceVersion = existing.ResourceVersion
+			if _, err = client.CoreV1().Secrets("default").Update(ctx, secret, metav1.UpdateOptions{}); err != nil {
+				return fmt.Errorf("failed to update secret: %w", err)
+			}
+			logger.Info("updated kubeconfig secret")
+			return nil
+		}
+		return fmt.Errorf("failed to create secret: %w", err)
+	}
+
+	logger.Info("created kubeconfig secret", "name", secret.Name)
 	return nil
 }
 
