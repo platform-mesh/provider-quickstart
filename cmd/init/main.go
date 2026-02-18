@@ -40,7 +40,7 @@ func main() {
 		klog.Fatal("--kubeconfig is required or set KUBECONFIG environment variable")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
 	defer cancel()
 
 	logger := klog.FromContext(ctx)
