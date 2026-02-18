@@ -20,5 +20,5 @@ import (
 	"embed"
 )
 
-//go:embed serviceaccount.yaml rbac.yaml
+//go:embed *.yaml
 var FS embed.FS

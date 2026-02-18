@@ -46,6 +46,12 @@ INIT_BINARY_NAME = wild-west-init
 # Build directory
 BUILD_DIR = bin
 
+# Image parameters
+IMAGE_REGISTRY ?= ghcr.io/platform-mesh
+IMAGE_NAME ?= provider-quickstart
+IMAGE_TAG ?= dev
+IMAGE ?= $(IMAGE_REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG)
+
 .PHONY: all
 all: build
 
@@ -102,6 +108,16 @@ vet:
 .PHONY: tidy
 tidy:
 	$(GOMOD) tidy
+
+## image-build: Build container image locally
+.PHONY: image-build
+image-build:
+	docker build -t $(IMAGE) -f deploy/Dockerfile .
+
+## image-push: Push container image to registry
+.PHONY: image-push
+image-push: image-build
+	docker push $(IMAGE)
 
 ## tools: Install all required tools
 .PHONY: tools

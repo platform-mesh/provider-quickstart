@@ -59,7 +59,7 @@ The `ui.platform-mesh.io/content-for` label is critical - it associates your UI 
 
 ## Usage
 
-> **Important:** Providers must live in a dedicated workspace type within a separate tree. This means platform administrators must configure providers using the **admin kubeconfig**. Regular user kubeconfigs will not have the necessary permissions to create provider workspaces.
+> **Important:** Providers must live in a dedicated workspace type within a separate tree. This means platform administrators must configure providers using the **admin kubeconfig**. Regular user kubeconfigs will not have the necessary permissions to create provider workspaces. This is bound to change and improve in the future, but for now you must use the admin kubeconfig to set up your provider.
 
 ### 1. Set Admin Kubeconfig
 
@@ -92,7 +92,12 @@ Build and run the bootstrap to register your provider:
 make init
 ```
 
-This applies all kcp and provider resources to register your provider.
+This applies all kcp and provider resources to register your provider and created dedicated 
+ServiceAccount and RBAC for the provider workspace.
+
+Once this is done, you should be able to access your provider's APIs through the kcp API and see it registered in the Platform Mesh UI.
+
+
 
 ## Debugging
 

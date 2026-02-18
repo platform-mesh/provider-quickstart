@@ -197,13 +197,17 @@ func createControllerKubeconfigSecret(ctx context.Context, client kubernetes.Int
 func bootstrapFS(ctx context.Context, dynamicClient dynamic.Interface, mapper meta.RESTMapper, cache discovery.CachedDiscoveryInterface, fs embed.FS) error {
 	logger := klog.FromContext(ctx)
 	var lastErr error
+	attempt := 0
 	err := wait.PollUntilContextCancel(ctx, time.Second, true, func(ctx context.Context) (bool, error) {
+		attempt++
+		logger.Info("bootstrap attempt", "attempt", attempt)
 		if err := createResourcesFromFS(ctx, dynamicClient, mapper, fs); err != nil {
-			logger.V(2).Info("failed to bootstrap resources, retrying", "error", err)
+			logger.Info("failed to bootstrap resources, retrying", "attempt", attempt, "error", err)
 			lastErr = err
 			cache.Invalidate()
 			return false, nil
 		}
+		logger.Info("bootstrap succeeded", "attempt", attempt)
 		return true, nil
 	})
 	if err != nil && lastErr != nil {
@@ -229,7 +233,7 @@ func createResourcesFromFS(ctx context.Context, client dynamic.Interface, mapper
 		if len(name) < 5 || (name[len(name)-5:] != ".yaml" && name[len(name)-4:] != ".yml") {
 			continue
 		}
-		logger.V(4).Info("processing file", "filename", name)
+		logger.Info("processing file", "filename", name)
 		if err := createResourceFromFS(ctx, client, mapper, name, fs); err != nil {
 			errs = append(errs, err)
 		}
@@ -245,7 +249,7 @@ func createResourceFromFS(ctx context.Context, client dynamic.Interface, mapper 
 	}
 
 	if len(raw) == 0 {
-		logger.V(4).Info("skipping empty file", "filename", filename)
+		logger.Info("skipping empty file", "filename", filename)
 		return nil
 	}
 
@@ -282,17 +286,20 @@ func createResource(ctx context.Context, client dynamic.Interface, mapper meta.R
 		return fmt.Errorf("missing kind in resource")
 	}
 
+	logger = logger.WithValues("kind", gvk.Kind, "name", u.GetName(), "namespace", u.GetNamespace())
+	logger.Info("resolving REST mapping", "gvk", gvk.String())
+
 	m, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 	if err != nil {
+		logger.Error(err, "failed to get REST mapping")
 		return fmt.Errorf("failed to get REST mapping for %s: %w", gvk, err)
 	}
 
-	logger = logger.WithValues("kind", gvk.Kind, "name", u.GetName())
-
+	logger.Info("creating resource", "resource", m.Resource.String())
 	_, err = client.Resource(m.Resource).Namespace(u.GetNamespace()).Create(ctx, u, metav1.CreateOptions{})
 	if err != nil {
 		if apierrors.IsAlreadyExists(err) {
-			logger.V(4).Info("resource already exists, updating")
+			logger.Info("resource already exists, updating")
 			existing, err := client.Resource(m.Resource).Namespace(u.GetNamespace()).Get(ctx, u.GetName(), metav1.GetOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to get existing %s %s: %w", gvk.Kind, u.GetName(), err)
@@ -305,6 +312,7 @@ func createResource(ctx context.Context, client dynamic.Interface, mapper meta.R
 			logger.Info("updated resource")
 			return nil
 		}
+		logger.Error(err, "failed to create resource")
 		return fmt.Errorf("failed to create %s %s: %w", gvk.Kind, u.GetName(), err)
 	}
 
