@@ -1,12 +1,12 @@
 # Platform Mesh Provider Quickstart
 
-A quickstart template for building Platform Mesh providers. This repo demonstrates how to create a provider that exposes APIs through KCP and integrates with the Platform Mesh UI.
+A quickstart template for building Platform Mesh providers. This repo demonstrates how to create a provider that exposes APIs through kcp and integrates with the Platform Mesh UI.
 
 ## What This Repo Does
 
 This is an example "Wild West" provider that exposes a `Cowboys` API (`wildwest.platform-mesh.io`). It shows how to:
 
-1. **Define and export APIs via KCP** - Using `APIExport` and `APIResourceSchema` resources
+1. **Define and export APIs via kcp** - Using `APIExport` and `APIResourceSchema` resources
 2. **Register as a Platform Mesh provider** - Using `ProviderMetadata` to describe your provider
 3. **Configure UI integration** - Using `ContentConfiguration` to add navigation and views
 
@@ -52,37 +52,64 @@ The `ui.platform-mesh.io/content-for` label is critical - it associates your UI 
 ```
 ├── cmd/init/              # Bootstrap CLI tool
 ├── config/
-│   ├── kcp/               # KCP resources (APIExport, APIResourceSchema)
+│   ├── kcp/               # kcp resources (APIExport, APIResourceSchema)
 │   └── provider/          # Provider resources (ProviderMetadata, ContentConfiguration, RBAC)
 └── pkg/bootstrap/         # Bootstrap logic for applying resources
 ```
 
 ## Usage
 
-1. Set your kubeconfig:
-   ```bash
-   export KUBECONFIG=/path/to/kcp/admin.kubeconfig
-   ```
+> **Important:** Providers must live in a dedicated workspace type within a separate tree. This means platform administrators must configure providers using the **admin kubeconfig**. Regular user kubeconfigs will not have the necessary permissions to create provider workspaces. This is bound to change and improve in the future, but for now you must use the admin kubeconfig to set up your provider.
 
-2. Build and run the bootstrap:
-   ```bash
-   make build
-   bin/wild-west-init
-   ```
+### 1. Set Admin Kubeconfig
 
-This applies all KCP and provider resources to register your provider.
+You need the admin kubeconfig to create and manage provider workspaces:
+
+```bash
+export KUBECONFIG=/path/to/kcp/admin.kubeconfig
+```
+
+### 2. Create Provider Workspace Hierarchy
+
+Navigate to the root workspace and create the provider workspace structure:
+
+```bash
+# Navigate to root workspace
+kubectl ws use :
+
+# Create the providers parent workspace (if it doesn't exist)
+kubectl ws create providers --type=root:providers --enter --ignore-existing
+
+# Create your provider workspace
+kubectl ws create quickstart --type=root:provider --enter --ignore-existing
+```
+
+### 3. Bootstrap Provider Resources
+
+Build and run the bootstrap to register your provider:
+
+```bash
+make init
+```
+
+This applies all kcp and provider resources to register your provider and created dedicated 
+ServiceAccount and RBAC for the provider workspace.
+
+Once this is done, you should be able to access your provider's APIs through the kcp API and see it registered in the Platform Mesh UI.
+
+
 
 ## Debugging
 
-Assuming your organization is `bob` and provider account is `quickstart`:
+Assuming your provider workspace is `quickstart` under the `providers` tree:
 
 ### Check Marketplace Entries
 
 View your provider's marketplace entry (combines APIExport + ProviderMetadata):
 
 ```bash
-kubectl --server="https://localhost:8443/services/marketplace/clusters/root:orgs:bob:quickstart" get marketplaceentries -A
-kubectl --server="https://localhost:8443/services/marketplace/clusters/root:orgs:bob:quickstart" get marketplaceentries -A -o yaml
+kubectl --server="https://localhost:8443/services/marketplace/clusters/root:providers:quickstart" get marketplaceentries -A
+kubectl --server="https://localhost:8443/services/marketplace/clusters/root:providers:quickstart" get marketplaceentries -A -o yaml
 ```
 
 ### Check Content Configurations
@@ -90,23 +117,22 @@ kubectl --server="https://localhost:8443/services/marketplace/clusters/root:orgs
 View available API resources and content configurations:
 
 ```bash
-kubectl --server="https://localhost:8443/services/contentconfigurations/clusters/root:orgs:bob:quickstart" api-resources
-kubectl --server="https://localhost:8443/services/contentconfigurations/clusters/root:orgs:bob:quickstart" get contentconfigurations -A
-kubectl --server="https://localhost:8443/services/contentconfigurations/clusters/root:orgs:bob:quickstart" get contentconfigurations -A -o yaml
+kubectl --server="https://localhost:8443/services/contentconfigurations/clusters/root:providers:quickstart" api-resources
+kubectl --server="https://localhost:8443/services/contentconfigurations/clusters/root:providers:quickstart" get contentconfigurations -A
+kubectl --server="https://localhost:8443/services/contentconfigurations/clusters/root:providers:quickstart" get contentconfigurations -A -o yaml
 ```
 
 ### URL Pattern
 
 The server URL follows this pattern:
 ```
-https://<host>/services/<virtual-workspace>/clusters/root:orgs:<org>:<account>
+https://<host>/services/<virtual-workspace>/clusters/root:providers:<provider-workspace>
 ```
 
 Where:
 - `marketplace` - Virtual workspace for marketplace entries
 - `contentconfigurations` - Virtual workspace for UI content configurations
-- `<org>` - Your organization name (e.g., `bob`)
-- `<account>` - Your provider account name (e.g., `quickstart`)
+- `<provider-workspace>` - Your provider workspace name (e.g., `quickstart`)
 
 ## Code Generation Tools
 
@@ -121,9 +147,9 @@ This project uses two key code generation tools:
 
 ### apigen
 
-[apigen](https://github.com/kcp-dev/sdk) is a KCP-specific tool that:
-- Converts standard Kubernetes **CRDs into APIResourceSchemas** for KCP
-- APIResourceSchemas are KCP's way of defining API types that can be exported via `APIExport`
+[apigen](https://github.com/kcp-dev/sdk) is a kcp-specific tool that:
+- Converts standard Kubernetes **CRDs into APIResourceSchemas** for kcp
+- APIResourceSchemas are kcp's way of defining API types that can be exported via `APIExport`
 - Takes CRDs from `config/crds/` and outputs APIResourceSchemas to `config/kcp/`
 
 **Generation flow:**

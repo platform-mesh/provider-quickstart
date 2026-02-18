@@ -1,0 +1,19 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: wildwest-controller
+rules:
+  # Full access to Cowboys resources
+  - apiGroups: ["wildwest.platform-mesh.io"]
+    resources: ["cowboys"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["wildwest.platform-mesh.io"]
+    resources: ["cowboys/status"]
+    verbs: ["get", "update", "patch"]
+  # Access to APIExport for controller operations
+  - apiGroups: ["apis.kcp.io"]
+    resources: ["apiexports"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apis.kcp.io"]
+    resources: ["apiexports/content"]
+    verbs: ["*"]
