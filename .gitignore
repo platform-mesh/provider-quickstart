@@ -3,3 +3,5 @@ bin/**
 hack/tools/**
 *.kubeconfig
 create-micro-frontend
+portal/node_modules
+portal/.angular
