@@ -40,6 +40,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
+	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
@@ -156,7 +157,7 @@ func createControllerKubeconfigSecret(ctx context.Context, client kubernetes.Int
 		CurrentContext: "workspace",
 	}
 
-	kubeconfigBytes, err := yaml.Marshal(kubeconfig)
+	kubeconfigBytes, err := clientcmd.Write(kubeconfig)
 	if err != nil {
 		return fmt.Errorf("failed to marshal kubeconfig: %w", err)
 	}

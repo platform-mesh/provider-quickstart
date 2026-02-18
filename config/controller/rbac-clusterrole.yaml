@@ -17,3 +17,6 @@ rules:
   - apiGroups: ["apis.kcp.io"]
     resources: ["apiexports/content"]
     verbs: ["*"]
+  - apiGroups: ["apis.kcp.io"]
+    resources: ["apiexportendpointslices"]
+    verbs: ["get", "list", "watch"]
