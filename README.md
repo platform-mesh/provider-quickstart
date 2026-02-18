@@ -97,7 +97,6 @@ ServiceAccount and RBAC for the provider workspace.
 
 Once this is done, you should be able to access your provider's APIs through the kcp API and see it registered in the Platform Mesh UI.
 
-
 ## Debugging
 
 Assuming your provider workspace is `quickstart` under the `providers` tree:
