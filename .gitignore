@@ -1,6 +1,4 @@
 bin/**
 .claude
 hack/tools/**
-README.md
-kk
-kubeconfig
+*.kubeconfig

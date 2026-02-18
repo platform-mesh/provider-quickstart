@@ -102,13 +102,13 @@ Once this is done, you should be able to access your provider's APIs through the
 Extract the kubeconfig for your provider workspace and run the operator locally:
 
 ```bash
-kubectl get secret wildwest-controller-kubeconfig -n default -o jsonpath='{.data.kubeconfig}' | base64 -d > kubeconfig
+kubectl get secret wildwest-controller-kubeconfig -n default -o jsonpath='{.data.kubeconfig}' | base64 -d > operator.kubeconfig
 ```
 
 Run the operator from your local machine using the extracted kubeconfig:
 
 ```bash
-KUBECONFIG=./kubeconfig go run ./cmd/wild-west --endpointslice=wildwest.platform-mesh.io
+KUBECONFIG=./operator.kubeconfig go run ./cmd/wild-west --endpointslice=wildwest.platform-mesh.io
 ```
 
 Running in the pod:
@@ -116,7 +116,7 @@ Running in the pod:
 ```bash
 kubectl create namespace provider-cowboys 
 kubectl create secret generic wildwest-controller-kubeconfig \
-  --from-file=kubeconfig=./kubeconfig -n provider-cowboys
+  --from-file=kubeconfig=./operator.kubeconfig -n provider-cowboys
 
 helm install wildwest-controller ./deploy/helm/wildwest-controller \
   --namespace provider-cowboys \
