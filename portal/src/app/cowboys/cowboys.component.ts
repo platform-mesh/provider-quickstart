@@ -84,17 +84,6 @@ export class CowboysComponent {
   public newCowboyNamespace = signal<string>('');
   public newCowboyIntent = signal<string>('');
 
-  constructor() {
-    // Debug: Log the full Luigi context whenever it changes
-    effect(() => {
-      const ctx = this.luigiContext();
-      console.log('=== LUIGI CONTEXT ===');
-      console.log('Full context:', JSON.stringify(ctx.context, null, 2));
-      console.log('Context type:', ctx.contextType);
-      console.log('=====================');
-    });
-  }
-
   /**
    * Initialize the component after Luigi shell handshake completes.
    *
