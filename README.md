@@ -50,11 +50,14 @@ The `ui.platform-mesh.io/content-for` label is critical - it associates your UI 
 ## Project Structure
 
 ```
-├── cmd/init/              # Bootstrap CLI tool
+├── cmd/
+│   ├── init/              # Bootstrap CLI tool
+│   └── wild-west/         # Provider operator
 ├── config/
 │   ├── kcp/               # kcp resources (APIExport, APIResourceSchema)
 │   └── provider/          # Provider resources (ProviderMetadata, ContentConfiguration, RBAC)
-└── pkg/bootstrap/         # Bootstrap logic for applying resources
+├── pkg/bootstrap/         # Bootstrap logic for applying resources
+└── portal/                # Custom UI microfrontend example (Angular + Luigi)
 ```
 
 ## Usage
@@ -209,22 +212,144 @@ Go types (apis/) → controller-gen → CRDs (config/crds/) → apigen → APIRe
 6. Update RBAC to allow binding to your APIExport
 
 
-# Micro frontend
+## Custom Provider UI (Microfrontend)
 
-Follow: https://openmfp.org/documentation/getting-started/installation
+Platform Mesh supports custom UIs for providers via microfrontends. This is useful when:
 
-```bash
-git clone https://github.com/openmfp/create-micro-frontend 
-cd create-micro-frontend
-npm i
-npm run build
+- Table views aren't sufficient for your resource representation
+- You need custom wizards or multi-step flows (e.g., VM creation with SSH keys)
+- You want to orchestrate multiple resources in a single view
+- You need custom visualizations beyond standard lists
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  Platform Mesh Portal                        │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │                   Luigi Shell                        │    │
+│  │                                                      │    │
+│  │   Your MFE receives from Luigi context:             │    │
+│  │   - token (Bearer auth for API calls)               │    │
+│  │   - portalContext.crdGatewayApiUrl (GraphQL API)    │    │
+│  │   - accountId (current account context)             │    │
+│  │                                                      │    │
+│  │   Your MFE can then:                                │    │
+│  │   - Query/mutate K8s resources via GraphQL          │    │
+│  │   - Use Luigi UX manager for alerts/dialogs         │    │
+│  │   - Navigate within the portal                      │    │
+│  │                                                      │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-Once it build you can do:
+### Quick Start
 
-```bash
-npx create-micro-frontend portal -y
-mv portal ../
-npm install
-npm start
+1. **Generate a new microfrontend:**
+   ```bash
+   git clone https://github.com/openmfp/create-micro-frontend
+   cd create-micro-frontend
+   npm install && npm run build
+   npx create-micro-frontend my-provider-ui -y
+   ```
+
+2. **Run locally:**
+   ```bash
+   cd my-provider-ui
+   npm install
+   npm start
+   ```
+   This serves your MFE at `http://localhost:4200`
+
+3. **Enable local development mode** in the Portal to load your local MFE
+
+4. **Deploy** by hosting the built files and creating a `ContentConfiguration` resource
+
+### Example Implementation
+
+This repo includes a complete working example in the `portal/` directory showing:
+
+- Luigi context integration for auth and API access
+- GraphQL queries/mutations for Kubernetes resources
+- SAP UI5 web components for consistent Portal styling
+- Local development proxy configuration
+
+See [portal/README.md](portal/README.md) for detailed documentation.
+
+### Key Integration Points
+
+**1. Luigi Context (auth & API URLs):**
+```typescript
+import { LuigiContextService } from '@luigi-project/client-support-angular';
+import LuigiClient from '@luigi-project/client';
+
+// Wait for Luigi handshake before making API calls
+LuigiClient.addInitListener(() => {
+  const context = luigiContextService.getContext();
+  const token = context.token;  // Bearer token
+  const apiUrl = context.portalContext.crdGatewayApiUrl;  // GraphQL endpoint
+});
 ```
+
+**2. GraphQL API for K8s resources:**
+```graphql
+query ListMyResources {
+  my_api_group_io {
+    v1alpha1 {
+      MyResources {
+        items { metadata { name } spec { ... } }
+      }
+    }
+  }
+}
+```
+
+**3. ContentConfiguration (register your MFE):**
+```yaml
+apiVersion: ui.platform-mesh.io/v1alpha1
+kind: ContentConfiguration
+metadata:
+  labels:
+    ui.platform-mesh.io/content-for: my-api.platform-mesh.io  # Links to your APIExport
+  name: my-ui
+spec:
+  inlineConfiguration:
+    contentType: json
+    content: |
+      {
+        "name": "my-ui",
+        "luigiConfigFragment": {
+          "data": {
+            "nodes": [{
+              "pathSegment": "my-resources",
+              "label": "My Resources",
+              "entityType": "main.core_platform-mesh_io_account:1",
+              "url": "https://your-mfe-host/index.html"
+            }]
+          }
+        }
+      }
+```
+
+### Navigation Categories
+
+Group your MFE under a category in the sidebar:
+
+```json
+{
+  "category": { "label": "Providers", "icon": "customize", "collapsible": true },
+  "pathSegment": "my-resources",
+  "label": "My Resources",
+  ...
+}
+```
+
+See [Luigi navigation docs](https://docs.luigi-project.io/docs/navigation-configuration?section=category) for more options.
+
+### Running as a Provider
+
+As a provider, you are responsible for hosting your microfrontend (similar to running your operator). The MFE needs to be accessible to Portal users. Options include:
+
+- Static hosting (S3, GCS, GitHub Pages, etc.)
+- Container deployment alongside your operator
+- Any web server that can serve static files

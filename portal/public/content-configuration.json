@@ -1,18 +1,26 @@
 {
-  "name": "my-microfrontend",
+  "name": "cowboys",
   "luigiConfigFragment": {
     "data": {
       "nodes": [
         {
-          "pathSegment": "ur-path-segment",
-          "label": "My Microfrontend",
+          "category": {
+            "label": "Providers",
+            "icon": "building",
+            "collapsible": false
+          },
+          "pathSegment": "cowboys",
+          "label": "Cowboys",
           "hideFromNav": false,
-          "icon": "lab",
+          "icon": "person-placeholder",
           "url": "http://localhost:4200/index.html",
-          "urlSuffix": "/index.html",
-          "entityType": "main",
+          "entityType": "main.core_platform-mesh_io_account:1",
+          "order": 900,
           "loadingIndicator": {
             "enabled": true
+          },
+          "context": {
+            "accountId": ":core_platform-mesh_io_accountId"
           }
         }
       ]
