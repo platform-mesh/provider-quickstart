@@ -207,3 +207,24 @@ Go types (apis/) → controller-gen → CRDs (config/crds/) → apigen → APIRe
 4. Update `ProviderMetadata` with your provider details
 5. Configure `ContentConfiguration` for your resource UI
 6. Update RBAC to allow binding to your APIExport
+
+
+# Micro frontend
+
+Follow: https://openmfp.org/documentation/getting-started/installation
+
+```bash
+git clone https://github.com/openmfp/create-micro-frontend 
+cd create-micro-frontend
+npm i
+npm run build
+```
+
+Once it build you can do:
+
+```bash
+npx create-micro-frontend portal -y
+mv portal ../
+npm install
+npm start
+```

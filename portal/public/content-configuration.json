@@ -1,0 +1,21 @@
+{
+  "name": "my-microfrontend",
+  "luigiConfigFragment": {
+    "data": {
+      "nodes": [
+        {
+          "pathSegment": "ur-path-segment",
+          "label": "My Microfrontend",
+          "hideFromNav": false,
+          "icon": "lab",
+          "url": "http://localhost:4200/index.html",
+          "urlSuffix": "/index.html",
+          "entityType": "main",
+          "loadingIndicator": {
+            "enabled": true
+          }
+        }
+      ]
+    }
+  }
+}
