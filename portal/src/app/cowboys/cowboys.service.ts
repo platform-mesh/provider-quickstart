@@ -159,19 +159,10 @@ export class CowboysService {
           endpoint = context.portalBaseUrl + '/graphql';
         }
 
-        // LOCAL DEV: Convert absolute URL to relative path for Angular proxy
-        // This is only needed when running locally with `ng serve`
-        // In production, the microfrontend runs on the same domain as the portal
-        try {
-          const url = new URL(endpoint);
-          const currentOrigin = window.location.origin;
-          if (currentOrigin.includes('localhost:4200') || currentOrigin.includes('localhost:8080')) {
-            endpoint = url.pathname; // Use path only, proxy handles the rest
-          }
-        } catch {
-          // URL parsing failed, use endpoint as-is
-        }
-
+        // Use the endpoint URL directly from the portal context
+        // The microfrontend runs in an iframe within the portal, so CORS is handled
+        // by the portal's backend (same-origin for the iframe's parent)
+        console.log('[CowboysService] Using endpoint:', endpoint);
         return { endpoint, token };
       })
     );
@@ -202,7 +193,6 @@ export class CowboysService {
           fetch(endpoint, {
             method: 'POST',
             headers: this.buildHeaders(token),
-            credentials: 'include',
             body: JSON.stringify({
               query: LIST_COWBOYS_QUERY,
             }),
@@ -230,7 +220,6 @@ export class CowboysService {
           fetch(endpoint, {
             method: 'POST',
             headers: this.buildHeaders(token),
-            credentials: 'include',
             body: JSON.stringify({
               query: LIST_NAMESPACES_QUERY,
             }),
@@ -258,7 +247,6 @@ export class CowboysService {
           fetch(endpoint, {
             method: 'POST',
             headers: this.buildHeaders(token),
-            credentials: 'include',
             body: JSON.stringify({
               query: CREATE_COWBOY_MUTATION,
               variables: { name, namespace, intent },
@@ -287,7 +275,6 @@ export class CowboysService {
           fetch(endpoint, {
             method: 'POST',
             headers: this.buildHeaders(token),
-            credentials: 'include',
             body: JSON.stringify({
               query: DELETE_COWBOY_MUTATION,
               variables: { name },

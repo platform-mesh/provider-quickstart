@@ -183,18 +183,20 @@ npm install
 
 3. **Configure proxy for API calls:**
 
-   The `proxy.conf.json` routes `/api` requests to the Platform Mesh gateway:
-   ```json
-   {
-     "/api": {
-       "target": "https://bob.portal.localhost:8443",
-       "secure": false,
-       "changeOrigin": true
+   The `proxy.conf.mjs` routes `/api` requests to the Platform Mesh gateway:
+   ```javascript
+   export default {
+     '/api': {
+       target: 'https://bob.portal.localhost:8443',
+       secure: false,
+       changeOrigin: true
      }
-   }
+   };
    ```
 
    Update the `target` to match your local Portal URL.
+
+   **Important:** After changing proxy settings, restart the dev server.
 
 ### How Local Development Mode Works
 

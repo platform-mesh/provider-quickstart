@@ -13,7 +13,7 @@
  * - context.token - Bearer token for API authentication
  * - context.portalContext.crdGatewayApiUrl - GraphQL endpoint for K8s resources
  */
-import { Component, CUSTOM_ELEMENTS_SCHEMA, inject, signal } from '@angular/core';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import LuigiClient from '@luigi-project/client';
 import { ILuigiContextTypes, LuigiContextService } from '@luigi-project/client-support-angular';
@@ -83,6 +83,17 @@ export class CowboysComponent {
   public newCowboyName = signal<string>('');
   public newCowboyNamespace = signal<string>('');
   public newCowboyIntent = signal<string>('');
+
+  constructor() {
+    // Debug: Log the full Luigi context whenever it changes
+    effect(() => {
+      const ctx = this.luigiContext();
+      console.log('=== LUIGI CONTEXT ===');
+      console.log('Full context:', JSON.stringify(ctx.context, null, 2));
+      console.log('Context type:', ctx.contextType);
+      console.log('=====================');
+    });
+  }
 
   /**
    * Initialize the component after Luigi shell handshake completes.
