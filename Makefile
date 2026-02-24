@@ -127,7 +127,7 @@ image-push: image-build
 ## portal-image-build: Build portal container image locally
 .PHONY: portal-image-build
 portal-image-build:
-	docker build -t $(PORTAL_IMAGE) -f deploy/Dockerfile.portal .
+	docker build -t $(PORTAL_IMAGE) -f deploy/portal.Dockerfile .
 
 ## portal-image-push: Push portal container image to registry
 .PHONY: portal-image-push
