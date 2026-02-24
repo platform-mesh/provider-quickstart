@@ -1,0 +1,29 @@
+{
+  "name": "cowboys",
+  "luigiConfigFragment": {
+    "data": {
+      "nodes": [
+        {
+          "category": {
+            "label": "Providers",
+            "icon": "building",
+            "collapsible": false
+          },
+          "pathSegment": "cowboys",
+          "label": "Cowboys",
+          "hideFromNav": false,
+          "icon": "person-placeholder",
+          "url": "http://localhost:4200/index.html",
+          "entityType": "main.core_platform-mesh_io_account:1",
+          "order": 900,
+          "loadingIndicator": {
+            "enabled": true
+          },
+          "context": {
+            "accountId": ":core_platform-mesh_io_accountId"
+          }
+        }
+      ]
+    }
+  }
+}

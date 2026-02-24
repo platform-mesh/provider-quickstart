@@ -1,0 +1,6 @@
+apiVersion: v2
+name: wildwest-portal
+description: Wild West Portal - Angular UI for KCP
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

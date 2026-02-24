@@ -1,0 +1,156 @@
+<!--
+  Cowboys Management UI - Example Microfrontend Template
+
+  This template demonstrates:
+  - Using SAP UI5 web components for consistent Portal styling
+  - Dynamic page layout with collapsible header
+  - Grid-based tile layout for displaying resources
+  - Dialog-based forms for creating new resources
+
+  UI5 Components used:
+  - ui5-dynamic-page: Main page container with collapsible header
+  - ui5-avatar: User/resource icons with initials
+  - ui5-toolbar: Action bars and toolbars
+  - ui5-dialog: Modal dialogs for forms
+  - ui5-input, ui5-select: Form controls
+-->
+<ui5-dynamic-page>
+  <ui5-dynamic-page-title slot="titleArea">
+    <ui5-title slot="heading" level="H3">Cowboys</ui5-title>
+
+    <div slot="snappedHeading" class="snapped-heading">
+      <ui5-avatar size="S" shape="Square" initials="CW" colorScheme="Accent6"></ui5-avatar>
+      <div class="snapped-heading-text">
+        <ui5-title level="H5">Cowboys</ui5-title>
+        <ui5-label>Wild West Resources</ui5-label>
+      </div>
+    </div>
+
+    <ui5-label slot="subheading">Manage your cowboys</ui5-label>
+
+    <ui5-toolbar slot="actionsBar" design="Transparent">
+      <ui5-toolbar-button text="Add Cowboy" design="Emphasized" icon="add" (click)="openAddDialog()"></ui5-toolbar-button>
+      <ui5-toolbar-button text="Refresh" design="Transparent" icon="refresh" (click)="loadCowboys()"></ui5-toolbar-button>
+    </ui5-toolbar>
+  </ui5-dynamic-page-title>
+
+  <ui5-dynamic-page-header slot="headerArea">
+    <div class="header-content">
+      <ui5-avatar size="XL" shape="Square" initials="CW" colorScheme="Accent6"></ui5-avatar>
+
+      <div class="header-info-block">
+        <div class="info-row">
+          <ui5-label>Resource Type:</ui5-label>
+          <ui5-text>Cowboy</ui5-text>
+        </div>
+        <div class="info-row">
+          <ui5-label>API Group:</ui5-label>
+          <ui5-text>wildwest.platform-mesh.io/v1alpha1</ui5-text>
+        </div>
+      </div>
+
+      <div class="header-status-block">
+        <div class="status-title">Total Cowboys</div>
+        <div class="object-number">
+          <span class="number">{{ cowboys().length }}</span>
+        </div>
+      </div>
+    </div>
+  </ui5-dynamic-page-header>
+
+  <!-- Main content area showing the list of Cowboys -->
+  <div class="cowboys-section">
+    <ui5-toolbar design="Transparent">
+      <ui5-title level="H5">Cowboys List</ui5-title>
+    </ui5-toolbar>
+
+    @if (loading()) {
+      <div class="loading-state">
+        <ui5-text>Loading cowboys...</ui5-text>
+      </div>
+    } @else if (cowboys().length === 0) {
+      <div class="empty-state">
+        <ui5-icon name="person-placeholder" class="empty-icon"></ui5-icon>
+        <ui5-title level="H5">No Cowboys Found</ui5-title>
+        <ui5-text>Click "Add Cowboy" to create your first cowboy resource.</ui5-text>
+      </div>
+    } @else {
+      <div class="cowboys-grid">
+        @for (cowboy of cowboys(); track cowboy.metadata.name) {
+          <div class="cowboy-tile" [class.has-result]="cowboy.status?.result">
+            <div class="tile-header">
+              <ui5-avatar size="M" shape="Circle" initials="{{ getInitials(cowboy.metadata.name) }}"
+                [colorScheme]="getColorScheme(cowboy.metadata.name)"></ui5-avatar>
+              <div class="tile-title">
+                <ui5-title level="H6">{{ cowboy.metadata.name }}</ui5-title>
+                <ui5-label class="namespace-label">{{ cowboy.metadata.namespace || 'default' }}</ui5-label>
+              </div>
+              <ui5-button icon="delete" design="Transparent" tooltip="Delete" (click)="deleteCowboy(cowboy)"></ui5-button>
+            </div>
+            <div class="tile-content">
+              <div class="tile-field">
+                <ui5-label>Intent</ui5-label>
+                <ui5-text>{{ cowboy.spec.intent || 'No intent set' }}</ui5-text>
+              </div>
+              <div class="tile-field">
+                <ui5-label>Result</ui5-label>
+                <span class="status-badge" [class.success]="cowboy.status?.result" [class.pending]="!cowboy.status?.result">
+                  {{ cowboy.status?.result || 'Pending' }}
+                </span>
+              </div>
+            </div>
+            <div class="tile-footer">
+              <ui5-icon name="calendar" class="footer-icon"></ui5-icon>
+              <ui5-label>{{ formatDate(cowboy.metadata.creationTimestamp) }}</ui5-label>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</ui5-dynamic-page>
+
+<!-- Add Cowboy Dialog - Example of a form dialog -->
+<ui5-dialog
+  header-text="Add Cowboy"
+  [open]="showAddDialog()"
+  (close)="closeAddDialog()"
+>
+  <div class="dialog-content">
+    <div class="form-field">
+      <ui5-label for="cowboy-namespace" required>Namespace</ui5-label>
+      <ui5-select
+        id="cowboy-namespace"
+        (change)="onNamespaceChange($event)"
+      >
+        @for (ns of namespaces(); track ns.metadata.name) {
+          <ui5-option [value]="ns.metadata.name" [selected]="ns.metadata.name === newCowboyNamespace()">
+            {{ ns.metadata.name }}
+          </ui5-option>
+        }
+      </ui5-select>
+    </div>
+    <div class="form-field">
+      <ui5-label for="cowboy-name" required>Name</ui5-label>
+      <ui5-input
+        id="cowboy-name"
+        placeholder="Enter cowboy name"
+        [value]="newCowboyName()"
+        (input)="onNameInput($event)"
+      ></ui5-input>
+    </div>
+    <div class="form-field">
+      <ui5-label for="cowboy-intent">Intent</ui5-label>
+      <ui5-input
+        id="cowboy-intent"
+        placeholder="Enter intent (e.g., yeehaw)"
+        [value]="newCowboyIntent()"
+        (input)="onIntentInput($event)"
+      ></ui5-input>
+    </div>
+  </div>
+  <div slot="footer" class="dialog-footer">
+    <ui5-button design="Transparent" (click)="closeAddDialog()">Cancel</ui5-button>
+    <ui5-button design="Emphasized" (click)="confirmAddCowboy()">Add</ui5-button>
+  </div>
+</ui5-dialog>

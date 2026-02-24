@@ -2,3 +2,4 @@ bin/**
 .claude
 hack/tools/**
 *.kubeconfig
+create-micro-frontend

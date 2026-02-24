@@ -8,114 +8,28 @@ metadata:
 spec:
   inlineConfiguration:
     content: |-
-      {
-          "name": "cowboys",
-          "luigiConfigFragment": {
-              "data": {
-                  "nodes": [
-                      {
-                          "pathSegment": "wildwest_platform-mesh_io_cowboys",
-                          "navigationContext": "wildwest_platform-mesh_io_cowboys",
-                          "label": "Cowboys",
-                          "icon": "person-placeholder",
-                          "order": 800,
-                          "entityType": "main.core_platform-mesh_io_account.namespace",
-                          "loadingIndicator": {
-                              "enabled": false
-                          },
-                          "keepSelectedForChildren": true,
-                          "url": "/assets/platform-mesh-portal-ui-wc.js#generic-list-view",
-                          "webcomponent": {
-                              "selfRegistered": true
-                          },
-                          "context": {
-                              "resourceDefinition": {
-                                  "group": "wildwest.platform-mesh.io",
-                                  "plural": "cowboys",
-                                  "singular": "cowboy",
-                                  "kind": "Cowboy",
-                                  "version": "v1alpha1",
-                                  "scope": "Namespaced",
-                                  "namespace": null,
-                                  "readyCondition": {
-                                    "jsonPathExpression": "status.result",
-                                    "property": ["status.result"]
-                                  },
-                                  "ui": {
-                                      "logoUrl": "https://www.kcp.io/icons/logo.svg",
-                                      "listView": {
-                                          "fields": [
-                                              {
-                                                  "label": "Name",
-                                                  "property": "metadata.name"
-                                              },
-                                              {
-                                                  "label": "Intent",
-                                                  "property": "spec.intent"
-                                              },
-                                              {
-                                                  "label": "Result",
-                                                  "property": "status.result"
-                                              }
-                                          ]
-                                      },
-                                      "detailView": {},
-                                      "createView": {
-                                          "fields": [
-                                              {
-                                                  "label": "Name",
-                                                  "property": "metadata.name",
-                                                  "required": true
-                                              },
-                                              {
-                                                  "label": "Intent",
-                                                  "property": "spec.intent",
-                                                  "required": false
-                                              }
-                                          ]
-                                      }
-                                  }
-                              }
-                          },
-                          "children": [
-                            {
-                                "pathSegment": ":cowboyId",
-                                "hideFromNav": true,
-                                "keepSelectedForChildren": false,
-                                "defineEntity": {
-                                    "id": "wildwest_platform-mesh_io_cowboy",
-                                    "contextKey": "cowboyId",
-                                    "graphqlEntity": {
-                                        "group": "wildwest_platform-mesh_io",
-                                        "kind": "Cowboy",
-                                        "query": "{ metadata { name } }"
-                                    }
-                                },
-                                "context": {
-                                    "accountId": ":accountId",
-                                    "namespaceId": ":namespaceId",
-                                    "resourceId": ":cowboyId"
-                                }
-                            }
-                          ]
-                      },
-                      {
-                        "entityType": "main.core_platform-mesh_io_account.namespace.wildwest_platform-mesh_io_cowboy",
-                        "pathSegment": "dashboard",
-                        "label": "Dashboard",
-                        "url": "/assets/platform-mesh-portal-ui-wc.js#generic-detail-view",
-                        "webcomponent": {
-                          "selfRegistered": true
-                        },
-                        "defineEntity": {
-                            "id": "dashboard"
-                        },
-                        "compound": {
-                            "children": []
-                        }
-                      }
-                  ]
+     {
+      "name": "cowboys",
+      "luigiConfigFragment": {
+        "data": {
+          "nodes": [
+            {
+              "pathSegment": "cowboys",
+              "label": "Cowboys",
+              "hideFromNav": false,
+              "icon": "person-placeholder",
+              "url": "http://localhost:4200/index.html",
+              "entityType": "main.core_platform-mesh_io_account",
+              "order": 900,
+              "loadingIndicator": {
+                "enabled": true
+              },
+              "context": {
+                "accountId": ":core_platform-mesh_io_accountId"
               }
-          }
+            }
+          ]
+        }
       }
+     }
     contentType: json

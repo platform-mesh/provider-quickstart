@@ -52,6 +52,11 @@ IMAGE_NAME ?= provider-quickstart
 IMAGE_TAG ?= dev
 IMAGE ?= $(IMAGE_REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG)
 
+# Portal image parameters
+PORTAL_IMAGE_NAME ?= provider-quickstart-portal
+PORTAL_IMAGE ?= $(IMAGE_REGISTRY)/$(PORTAL_IMAGE_NAME):$(IMAGE_TAG)
+PORTAL_PORT ?= 4200
+
 .PHONY: all
 all: build
 
@@ -109,15 +114,50 @@ vet:
 tidy:
 	$(GOMOD) tidy
 
-## image-build: Build container image locally
+## image-build: Build controller container image locally
 .PHONY: image-build
 image-build:
 	docker build -t $(IMAGE) -f deploy/Dockerfile .
 
-## image-push: Push container image to registry
+## image-push: Push controller container image to registry
 .PHONY: image-push
 image-push: image-build
 	docker push $(IMAGE)
+
+## portal-image-build: Build portal container image locally
+.PHONY: portal-image-build
+portal-image-build:
+	docker build -t $(PORTAL_IMAGE) -f deploy/portal.Dockerfile .
+
+## portal-image-push: Push portal container image to registry
+.PHONY: portal-image-push
+portal-image-push: portal-image-build
+	docker push $(PORTAL_IMAGE)
+
+## images: Build all container images
+.PHONY: images
+images: image-build portal-image-build
+
+## images-push: Push all container images
+.PHONY: images-push
+images-push: image-push portal-image-push
+
+## portal-run: Run portal container locally (accessible at http://localhost:$(PORTAL_PORT))
+.PHONY: portal-run
+portal-run:
+	docker run --rm -p $(PORTAL_PORT):8080 $(PORTAL_IMAGE)
+
+## portal-run-detached: Run portal container in background
+.PHONY: portal-run-detached
+portal-run-detached:
+	docker run -d --rm --name wildwest-portal -p $(PORTAL_PORT):80 $(PORTAL_IMAGE)
+	@echo "Portal running at http://localhost:$(PORTAL_PORT)"
+	@echo "Stop with: docker stop wildwest-portal"
+
+## portal-stop: Stop the portal container
+.PHONY: portal-stop
+portal-stop:
+	docker stop wildwest-portal
 
 ## tools: Install all required tools
 .PHONY: tools

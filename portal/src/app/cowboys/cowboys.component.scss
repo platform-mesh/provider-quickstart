@@ -1,0 +1,228 @@
+:host {
+  font-size: 16px;
+}
+
+.snapped-heading {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.snapped-heading-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.header-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.header-info-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-row {
+  display: flex;
+  gap: 0.25rem;
+  align-items: baseline;
+}
+
+.header-status-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-right: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.status-title {
+  color: var(--sapTextColor);
+  font-weight: 600;
+}
+
+.object-number {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+
+  .number {
+    font-size: 2rem;
+    font-weight: 300;
+  }
+}
+
+.cowboys-section {
+  margin-top: 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 0.25rem;
+
+  ui5-input {
+    width: 17.5rem;
+  }
+}
+
+.loading-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  gap: 1rem;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  color: var(--sapNeutralColor);
+  opacity: 0.5;
+}
+
+.cowboys-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.cowboy-tile {
+  background: var(--sapTile_Background);
+  border: 1px solid var(--sapTile_BorderColor);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  &.has-result {
+    border-left: 4px solid var(--sapPositiveColor);
+  }
+}
+
+.tile-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .tile-title {
+    flex: 1;
+    min-width: 0;
+
+    ui5-title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .namespace-label {
+    color: var(--sapNeutralTextColor);
+    font-size: 0.75rem;
+  }
+}
+
+.tile-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--sapGroup_ContentBorderColor);
+  border-bottom: 1px solid var(--sapGroup_ContentBorderColor);
+}
+
+.tile-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+
+  ui5-label {
+    color: var(--sapNeutralTextColor);
+    font-size: 0.8125rem;
+  }
+
+  ui5-text {
+    font-weight: 500;
+    text-align: right;
+  }
+}
+
+.tile-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--sapNeutralTextColor);
+
+  .footer-icon {
+    font-size: 0.875rem;
+  }
+
+  ui5-label {
+    font-size: 0.75rem;
+  }
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+
+  &.pending {
+    background-color: var(--sapNeutralBackground);
+    color: var(--sapNeutralTextColor);
+  }
+
+  &.success {
+    background-color: var(--sapPositiveBackground);
+    color: var(--sapPositiveTextColor);
+  }
+}
+
+ui5-dynamic-page::part(fit-content) {
+  padding: 0;
+}
+
+ui5-table-header-cell ui5-text {
+  font-weight: 600;
+}
+
+.dialog-content {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 300px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  ui5-input {
+    width: 100%;
+  }
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+}
