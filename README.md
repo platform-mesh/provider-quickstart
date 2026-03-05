@@ -353,3 +353,5 @@ As a provider, you are responsible for hosting your microfrontend (similar to ru
 - Static hosting (S3, GCS, GitHub Pages, etc.)
 - Container deployment alongside your operator
 - Any web server that can serve static files
+
+<p align="center"><img alt="Bundesministerium für Wirtschaft und Energie (BMWE)-EU funding logo" src="https://apeirora.eu/assets/img/BMWK-EU.png" width="400"/></p>
