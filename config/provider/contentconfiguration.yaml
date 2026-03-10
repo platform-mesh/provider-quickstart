@@ -18,7 +18,7 @@ spec:
               "label": "Cowboys",
               "hideFromNav": false,
               "icon": "person-placeholder",
-              "url": "http://localhost:4200/index.html",
+              "url": "https://{context.organization}.portal.localhost:8443/cowboys/",
               "entityType": "main.core_platform-mesh_io_account",
               "order": 900,
               "loadingIndicator": {

@@ -33,7 +33,9 @@ func main() {
 	klog.InitFlags(nil)
 
 	var kubeconfig string
+	var hostOverride string
 	pflag.StringVar(&kubeconfig, "kubeconfig", os.Getenv("KUBECONFIG"), "Path to kubeconfig file")
+	pflag.StringVar(&hostOverride, "host-override", os.Getenv("HOST_OVERRIDE"), "Override the server URL in the generated controller kubeconfig (e.g. https://frontproxy-front-proxy.platform-mesh-system:6443)")
 	pflag.Parse()
 
 	if kubeconfig == "" {
@@ -54,7 +56,7 @@ func main() {
 
 	logger.Info("Bootstrapping provider resources")
 
-	if err := bootstrap.Bootstrap(ctx, config); err != nil {
+	if err := bootstrap.Bootstrap(ctx, config, hostOverride); err != nil {
 		klog.Fatal("Failed to bootstrap", "err", err)
 	}
 

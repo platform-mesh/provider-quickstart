@@ -20,4 +20,10 @@ FROM nginx:alpine
 RUN rm -rf /usr/share/nginx/html/*
 COPY --from=build /app/dist/portal/browser /usr/share/nginx/html
 COPY deploy/nginx.conf /etc/nginx/nginx.conf
+
+# Fix permissions for non-root nginx user (uid 101)
+RUN mkdir -p /var/cache/nginx /var/run /var/log/nginx && \
+    chown -R 101:101 /var/cache/nginx /var/run /var/log/nginx /etc/nginx/conf.d
+
 EXPOSE 8080
+USER 101

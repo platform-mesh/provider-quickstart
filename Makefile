@@ -79,10 +79,11 @@ build-init: fmt vet
 run: fmt vet
 	$(GORUN) ./cmd/wild-west/main.go --endpointslice=wildwest.platform-mesh.io
 
-## init: Bootstrap provider resources into workspace (requires KUBECONFIG)
+## init: Bootstrap provider resources into workspace (requires KUBECONFIG, optional HOST_OVERRIDE)
+HOST_OVERRIDE ?=
 .PHONY: init
 init: build-init
-	$(BUILD_DIR)/$(INIT_BINARY_NAME)
+	$(BUILD_DIR)/$(INIT_BINARY_NAME) $(if $(HOST_OVERRIDE),--host-override=$(HOST_OVERRIDE))
 
 ## generate: Generate code (deepcopy, etc.) and kcp resources
 .PHONY: generate
@@ -141,6 +142,23 @@ images: image-build portal-image-build
 ## images-push: Push all container images
 .PHONY: images-push
 images-push: image-push portal-image-push
+
+# Kind cluster parameters
+KIND_CLUSTER ?= platform-mesh
+
+## kind-load: Load controller image into kind cluster
+.PHONY: kind-load
+kind-load: image-build
+	kind load docker-image $(IMAGE) --name $(KIND_CLUSTER)
+
+## kind-load-portal: Load portal image into kind cluster
+.PHONY: kind-load-portal
+kind-load-portal: portal-image-build
+	kind load docker-image $(PORTAL_IMAGE) --name $(KIND_CLUSTER)
+
+## kind-load-all: Load all images into kind cluster
+.PHONY: kind-load-all
+kind-load-all: kind-load kind-load-portal
 
 ## portal-run: Run portal container locally (accessible at http://localhost:$(PORTAL_PORT))
 .PHONY: portal-run

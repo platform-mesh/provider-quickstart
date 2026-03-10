@@ -47,7 +47,7 @@ affinity: {}
 controller:
   endpointSlice: "wildwest.platform-mesh.io"
 
-# KCP kubeconfig secret
+# kcp kubeconfig secret
 kubeconfig:
   secretName: "wildwest-controller-kubeconfig"
   secretKey: "kubeconfig"
