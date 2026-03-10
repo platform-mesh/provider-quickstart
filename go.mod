@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/kcp-dev/multicluster-provider v0.3.3
 	github.com/kcp-dev/sdk v0.28.1-0.20251209130449-436a0347809b
-	github.com/spf13/pflag v1.0.6
+	github.com/spf13/pflag v1.0.10
 	k8s.io/api v0.34.2
 	k8s.io/apimachinery v0.34.2
 	k8s.io/client-go v0.34.2
