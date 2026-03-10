@@ -69,7 +69,10 @@ The `ui.platform-mesh.io/content-for` label is critical - it associates your UI 
 You need the admin kubeconfig to create and manage provider workspaces:
 
 ```bash
-export KUBECONFIG=/path/to/kcp/admin.kubeconfig
+cp ../helm-charts/.secret/kcp/admin.kubeconfig kcp-admin.kubeconfig
+export PM_KUBECONFIG="$(realpath kcp-admin.kubeconfig)"
+kind export kubeconfig --name platform-mesh --kubeconfig compute.kubeconfig
+export COMPUTE_KUBECONFIG="$(realpath compute.kubeconfig)"
 ```
 
 ### 2. Create Provider Workspace Hierarchy
@@ -77,14 +80,10 @@ export KUBECONFIG=/path/to/kcp/admin.kubeconfig
 Navigate to the root workspace and create the provider workspace structure:
 
 ```bash
-# Navigate to root workspace
-kubectl ws use :
-
-# Create the providers parent workspace (if it doesn't exist)
-kubectl ws create providers --type=root:providers --enter --ignore-existing
-
-# Create your provider workspace
-kubectl ws create quickstart --type=root:provider --enter --ignore-existing
+# Navigate to root workspace and create provider workspace hierarchy
+KUBECONFIG=$PM_KUBECONFIG kubectl ws use :
+KUBECONFIG=$PM_KUBECONFIG kubectl ws create providers --type=root:providers --enter --ignore-existing
+KUBECONFIG=$PM_KUBECONFIG kubectl ws create quickstart --type=root:provider --enter --ignore-existing
 ```
 
 ### 3. Bootstrap Provider Resources
@@ -92,7 +91,7 @@ kubectl ws create quickstart --type=root:provider --enter --ignore-existing
 Build and run the bootstrap to register your provider:
 
 ```bash
-make init
+KUBECONFIG=$PM_KUBECONFIG make init HOST_OVERRIDE=https://frontproxy-front-proxy.platform-mesh-system:6443
 ```
 
 This applies all kcp and provider resources to register your provider and created dedicated 
@@ -100,31 +99,69 @@ ServiceAccount and RBAC for the provider workspace.
 
 Once this is done, you should be able to access your provider's APIs through the kcp API and see it registered in the Platform Mesh UI.
 
-### 4. Run the Operator
+### 4. Extract Operator Kubeconfig
 
-Extract the kubeconfig for your provider workspace and run the operator locally:
+Extract the kubeconfig for your provider workspace:
 
 ```bash
-kubectl get secret wildwest-controller-kubeconfig -n default -o jsonpath='{.data.kubeconfig}' | base64 -d > operator.kubeconfig
+KUBECONFIG=$PM_KUBECONFIG kubectl get secret wildwest-controller-kubeconfig -n default -o jsonpath='{.data.kubeconfig}' | base64 -d > operator.kubeconfig
 ```
 
-Run the operator from your local machine using the extracted kubeconfig:
+### 5. Run the Operator Locally (optional)
+
+For local development, run the operator directly:
 
 ```bash
 KUBECONFIG=./operator.kubeconfig go run ./cmd/wild-west --endpointslice=wildwest.platform-mesh.io
 ```
 
-Running in the pod:
+### 6. Build and Load Images
+
+Build container images and load them into the kind cluster:
 
 ```bash
-kubectl create namespace provider-cowboys 
-kubectl create secret generic wildwest-controller-kubeconfig \
-  --from-file=kubeconfig=./operator.kubeconfig -n provider-cowboys
-
-helm install wildwest-controller ./deploy/helm/wildwest-controller \
-  --namespace provider-cowboys \
-  --set image.tag=0.0.1-rc2
+export IMAGE_TAG=platform-mesh
+make images kind-load-all IMAGE_TAG=$IMAGE_TAG
 ```
+
+### 7. Deploy to Cluster
+
+Create the namespace and the kubeconfig secret for the operator:
+
+```bash
+KUBECONFIG=$COMPUTE_KUBECONFIG kubectl create namespace provider-cowboys
+KUBECONFIG=$COMPUTE_KUBECONFIG kubectl create secret generic wildwest-controller-kubeconfig \
+  --from-file=kubeconfig=./operator.kubeconfig -n provider-cowboys
+```
+
+Deploy the controller:
+
+```bash
+KUBECONFIG=$COMPUTE_KUBECONFIG helm upgrade --install wildwest-controller ./deploy/helm/wildwest-controller \
+  --namespace provider-cowboys \
+  --set image.tag=$IMAGE_TAG \
+  --set image.pullPolicy=IfNotPresent
+```
+
+Deploy the portal microfrontend:
+
+```bash
+KUBECONFIG=$COMPUTE_KUBECONFIG helm upgrade --install wildwest-portal ./deploy/helm/wildwest-portal \
+  --namespace provider-cowboys \
+  --set image.tag=$IMAGE_TAG \
+  --set image.pullPolicy=IfNotPresent \
+  --set httpRoute.enabled=true \
+  --set middleware.enabled=true
+```
+
+To upgrade after rebuilding images:
+
+```bash
+make images kind-load-all IMAGE_TAG=$IMAGE_TAG
+KUBECONFIG=$COMPUTE_KUBECONFIG kubectl rollout restart deployment -n provider-cowboys
+```
+
+
 
 ## Debugging
 
@@ -192,10 +229,16 @@ Go types (apis/) → controller-gen → CRDs (config/crds/) → apigen → APIRe
 | `make build-operator` | Build the wild-west operator binary |
 | `make build-init` | Build the init/bootstrap binary |
 | `make run` | Run the wild-west operator locally |
-| `make init` | Bootstrap provider resources into workspace (requires KUBECONFIG) |
+| `make init` | Bootstrap provider resources into workspace (requires KUBECONFIG, optional HOST_OVERRIDE) |
 | `make generate` | Generate code (deepcopy) and kcp resources |
 | `make manifests` | Generate CRD manifests from Go types |
 | `make apiresourceschemas` | Generate APIResourceSchemas from CRDs |
+| `make image-build` | Build controller container image |
+| `make portal-image-build` | Build portal container image |
+| `make images` | Build all container images |
+| `make kind-load` | Load controller image into kind cluster |
+| `make kind-load-portal` | Load portal image into kind cluster |
+| `make kind-load-all` | Load all images into kind cluster |
 | `make tools` | Install all required tools (controller-gen, apigen) |
 | `make fmt` | Run go fmt |
 | `make vet` | Run go vet |
@@ -250,12 +293,12 @@ Platform Mesh supports custom UIs for providers via microfrontends. This is usef
    git clone https://github.com/openmfp/create-micro-frontend
    cd create-micro-frontend
    npm install && npm run build
-   npx create-micro-frontend my-provider-ui -y
+   npx create-micro-frontend portal -y
    ```
 
 2. **Run locally:**
    ```bash
-   cd my-provider-ui
+   cd portal
    npm install
    npm start
    ```

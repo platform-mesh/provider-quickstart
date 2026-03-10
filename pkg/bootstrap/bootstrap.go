@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -54,7 +55,7 @@ import (
 // It bootstraps kcp resources (APIResourceSchema, APIExport), provider
 // resources (ProviderMetadata, ContentConfiguration, RBAC), and controller
 // resources (ServiceAccount, RBAC, kubeconfig Secret).
-func Bootstrap(ctx context.Context, config *rest.Config) error {
+func Bootstrap(ctx context.Context, config *rest.Config, hostOverride string) error {
 	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
 	if err != nil {
 		return fmt.Errorf("failed to create discovery client: %w", err)
@@ -95,7 +96,7 @@ func Bootstrap(ctx context.Context, config *rest.Config) error {
 
 	// Create kubeconfig secret for controller
 	logger.Info("Creating controller kubeconfig secret")
-	if err := createControllerKubeconfigSecret(ctx, kubeClient, config); err != nil {
+	if err := createControllerKubeconfigSecret(ctx, kubeClient, config, hostOverride); err != nil {
 		return fmt.Errorf("failed to create controller kubeconfig secret: %w", err)
 	}
 
@@ -105,7 +106,7 @@ func Bootstrap(ctx context.Context, config *rest.Config) error {
 
 // createControllerKubeconfigSecret creates a Secret containing a kubeconfig
 // that the controller can use to connect to the workspace from outside.
-func createControllerKubeconfigSecret(ctx context.Context, client kubernetes.Interface, config *rest.Config) error {
+func createControllerKubeconfigSecret(ctx context.Context, client kubernetes.Interface, config *rest.Config, hostOverride string) error {
 	logger := klog.FromContext(ctx)
 
 	// Wait for the service account token secret to be populated
@@ -134,12 +135,23 @@ func createControllerKubeconfigSecret(ctx context.Context, client kubernetes.Int
 	caCert := tokenSecret.Data["ca.crt"]
 
 	// Build kubeconfig pointing to this workspace
+	server := config.Host
+	if hostOverride != "" {
+		// Preserve the workspace path from the original host URL,
+		// replacing only the scheme+host+port with the override.
+		if u, err := url.Parse(config.Host); err == nil && u.Path != "" {
+			server = hostOverride + u.Path
+		} else {
+			server = hostOverride
+		}
+		logger.Info("Using host override for kubeconfig", "server", server)
+	}
 	kubeconfig := clientcmdapi.Config{
 		Kind:       "Config",
 		APIVersion: "v1",
 		Clusters: map[string]*clientcmdapi.Cluster{
 			"workspace": {
-				Server:                   config.Host,
+				Server:                   server,
 				CertificateAuthorityData: caCert,
 			},
 		},

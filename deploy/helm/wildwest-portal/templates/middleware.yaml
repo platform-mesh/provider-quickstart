@@ -1,0 +1,21 @@
+{{- if .Values.middleware.enabled -}}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "wildwest-portal.fullname" . }}-cors
+  labels:
+    {{- include "wildwest-portal.labels" . | nindent 4 }}
+spec:
+  headers:
+    accessControlAllowCredentials: true
+    accessControlAllowHeaders:
+      - "*"
+    accessControlAllowMethods:
+      - GET
+      - OPTIONS
+      - POST
+    accessControlAllowOriginList:
+      {{- toYaml .Values.middleware.corsOrigins | nindent 6 }}
+    accessControlMaxAge: 100
+    addVaryHeader: true
+{{- end }}

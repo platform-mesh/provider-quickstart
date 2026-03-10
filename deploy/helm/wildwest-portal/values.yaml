@@ -31,7 +31,7 @@ securityContext:
 
 service:
   type: ClusterIP
-  port: 80
+  port: 8080
 
 ingress:
   enabled: false
@@ -43,6 +43,35 @@ ingress:
         - path: /
           pathType: Prefix
   tls: []
+
+httpRoute:
+  enabled: false
+  hostnames:
+    - portal.localhost
+    - "*.portal.localhost"
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: k8sapi-gateway
+      namespace: platform-mesh-system
+  pathPrefix: /cowboys
+  filters:
+    - extensionRef:
+        group: traefik.io
+        kind: Middleware
+        name: wildwest-portal-cors
+      type: ExtensionRef
+  referenceGrant:
+    enabled: true
+    fromNamespace: platform-mesh-system
+
+middleware:
+  enabled: false
+  corsOrigins:
+    - http://localhost:4200
+    - http://*.localhost:4200
+    - https://portal.localhost:8443
+    - https://*.portal.localhost:8443
 
 resources:
   limits:
