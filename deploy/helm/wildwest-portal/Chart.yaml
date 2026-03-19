@@ -4,3 +4,7 @@ description: Wild West Portal - Angular UI for KCP
 type: application
 version: 0.1.0
 appVersion: "0.1.0"
+dependencies:
+  - name: common
+    version: 0.12.1
+    repository: oci://ghcr.io/platform-mesh/helm-charts

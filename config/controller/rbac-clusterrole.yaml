@@ -10,6 +10,10 @@ rules:
   - apiGroups: ["wildwest.platform-mesh.io"]
     resources: ["cowboys/status"]
     verbs: ["get", "update", "patch"]
+  # Events
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
   # Access to APIExport for controller operations
   - apiGroups: ["apis.kcp.io"]
     resources: ["apiexports"]

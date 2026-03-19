@@ -24,10 +24,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	mcmanager "sigs.k8s.io/multicluster-runtime/pkg/manager"
 
@@ -66,7 +68,12 @@ func main() {
 
 	// Setup a Manager, note that this not yet engages clusters, only makes them available.
 	entryLog.Info("Setting up manager")
-	opts := manager.Options{}
+	opts := manager.Options{
+		HealthProbeBindAddress: ":8080",
+		Metrics: metricsserver.Options{
+			BindAddress: ":9080",
+		},
+	}
 
 	var err error
 	provider, err = apiexport.New(cfg, endpointSlice, apiexport.Options{})
@@ -78,6 +85,15 @@ func main() {
 	mgr, err := mcmanager.New(cfg, provider, opts)
 	if err != nil {
 		entryLog.Error(err, "unable to set up overall controller manager")
+		os.Exit(1)
+	}
+
+	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+		entryLog.Error(err, "unable to set up health check")
+		os.Exit(1)
+	}
+	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+		entryLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
 

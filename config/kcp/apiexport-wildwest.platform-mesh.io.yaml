@@ -5,6 +5,11 @@ metadata:
     ui.platform-mesh.io/content-for: wildwest.platform-mesh.io
   name: wildwest.platform-mesh.io
 spec:
+  permissionClaims:
+  - group: ""
+    resource: events
+    verbs:
+    - '*'
   resources:
   - group: wildwest.platform-mesh.io
     name: cowboys
