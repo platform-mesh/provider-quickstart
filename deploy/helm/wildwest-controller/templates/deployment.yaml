@@ -26,6 +26,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "wildwest-controller.serviceAccountName" . }}
+{{ include "common.hostAliases" $ | nindent 6 }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -41,10 +42,10 @@ spec:
               value: /etc/kcp/kubeconfig
           ports:
             - name: metrics
-              containerPort: 8080
+              containerPort: 9080
               protocol: TCP
             - name: health
-              containerPort: 8081
+              containerPort: 8080
               protocol: TCP
           livenessProbe:
             httpGet:

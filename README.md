@@ -130,6 +130,7 @@ Create the namespace and the kubeconfig secret for the operator:
 
 ```bash
 KUBECONFIG=$COMPUTE_KUBECONFIG kubectl create namespace provider-cowboys
+KUBECONFIG=$COMPUTE_KUBECONFIG kubectl delete secret wildwest-controller-kubeconfig -n provider-cowboys --ignore-not-found
 KUBECONFIG=$COMPUTE_KUBECONFIG kubectl create secret generic wildwest-controller-kubeconfig \
   --from-file=kubeconfig=./operator.kubeconfig -n provider-cowboys
 ```
@@ -140,7 +141,8 @@ Deploy the controller:
 KUBECONFIG=$COMPUTE_KUBECONFIG helm upgrade --install wildwest-controller ./deploy/helm/wildwest-controller \
   --namespace provider-cowboys \
   --set image.tag=$IMAGE_TAG \
-  --set image.pullPolicy=IfNotPresent
+  --set image.pullPolicy=IfNotPresent \
+  --set common.defaults.hostAliases.enabled=true
 ```
 
 Deploy the portal microfrontend:
@@ -151,7 +153,8 @@ KUBECONFIG=$COMPUTE_KUBECONFIG helm upgrade --install wildwest-portal ./deploy/h
   --set image.tag=$IMAGE_TAG \
   --set image.pullPolicy=IfNotPresent \
   --set httpRoute.enabled=true \
-  --set middleware.enabled=true
+  --set middleware.enabled=true \
+  --set common.defaults.hostAliases.enabled=true
 ```
 
 To upgrade after rebuilding images:
@@ -160,8 +163,6 @@ To upgrade after rebuilding images:
 make images kind-load-all IMAGE_TAG=$IMAGE_TAG
 KUBECONFIG=$COMPUTE_KUBECONFIG kubectl rollout restart deployment -n provider-cowboys
 ```
-
-
 
 ## Debugging
 

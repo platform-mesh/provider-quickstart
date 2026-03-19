@@ -236,7 +236,7 @@ export class CowboysComponent {
         buttonDismiss: 'Cancel',
       })
       .then(() => {
-        this.cowboysService.deleteCowboy(cowboy.metadata.name).subscribe({
+        this.cowboysService.deleteCowboy(cowboy.metadata.name, cowboy.metadata.namespace!).subscribe({
           next: (success) => {
             if (success) {
               LuigiClient.uxManager().showAlert({

@@ -115,10 +115,10 @@ const CREATE_COWBOY_MUTATION = `
 `;
 
 const DELETE_COWBOY_MUTATION = `
-  mutation DeleteCowboy($name: String!) {
+  mutation DeleteCowboy($name: String!, $namespace: String!) {
     wildwest_platform_mesh_io {
       v1alpha1 {
-        deleteCowboy(name: $name)
+        deleteCowboy(name: $name, namespace: $namespace)
       }
     }
   }
@@ -268,7 +268,7 @@ export class CowboysService {
    * Delete a Cowboy resource by name.
    * Uses GraphQL mutation pattern: delete{Kind}(name)
    */
-  deleteCowboy(name: string): Observable<boolean> {
+  deleteCowboy(name: string, namespace: string): Observable<boolean> {
     return this.getGraphQLConfig().pipe(
       switchMap(({ endpoint, token }) =>
         from(
@@ -277,7 +277,7 @@ export class CowboysService {
             headers: this.buildHeaders(token),
             body: JSON.stringify({
               query: DELETE_COWBOY_MUTATION,
-              variables: { name },
+              variables: { name, namespace },
             }),
           }).then((res) => res.json())
         )
