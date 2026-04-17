@@ -15,7 +15,7 @@
  */
 import { Component, CUSTOM_ELEMENTS_SCHEMA, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import LuigiClient from '@luigi-project/client';
+import * as LuigiClient from '@luigi-project/client';
 import { ILuigiContextTypes, LuigiContextService } from '@luigi-project/client-support-angular';
 import {
   AvatarComponent,
