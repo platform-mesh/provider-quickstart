@@ -49,6 +49,18 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
+Create the container image reference, handling both tag and digest formats.
+*/}}
+{{- define "wildwest-portal.image" -}}
+{{- $tag := .Values.image.tag | default .Chart.AppVersion -}}
+{{- if hasPrefix "@" $tag -}}
+{{- printf "%s%s" .Values.image.repository $tag -}}
+{{- else -}}
+{{- printf "%s:%s" .Values.image.repository $tag -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 Create the name of the service account to use
 */}}
 {{- define "wildwest-portal.serviceAccountName" -}}
