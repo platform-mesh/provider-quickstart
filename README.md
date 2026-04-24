@@ -1,5 +1,7 @@
 # Platform Mesh Provider Quickstart
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/platform-mesh/provider-quickstart/badge)](https://scorecard.dev/viewer/?uri=github.com/platform-mesh/provider-quickstart)
+
 A quickstart template for building Platform Mesh providers. This repo demonstrates how to create a provider that exposes APIs through kcp and integrates with the Platform Mesh UI.
 
 ## What This Repo Does
