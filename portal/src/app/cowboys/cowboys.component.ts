@@ -36,9 +36,12 @@ import {
 } from '@ui5/webcomponents-ngx';
 
 // Import UI5 icons used in the template
+import '@ui5/webcomponents-icons/dist/accept.js';
 import '@ui5/webcomponents-icons/dist/add.js';
 import '@ui5/webcomponents-icons/dist/calendar.js';
 import '@ui5/webcomponents-icons/dist/delete.js';
+import '@ui5/webcomponents-icons/dist/error.js';
+import '@ui5/webcomponents-icons/dist/pending.js';
 import '@ui5/webcomponents-icons/dist/person-placeholder.js';
 import '@ui5/webcomponents-icons/dist/refresh.js';
 
@@ -83,6 +86,10 @@ export class CowboysComponent {
   public newCowboyName = signal<string>('');
   public newCowboyNamespace = signal<string>('');
   public newCowboyIntent = signal<string>('');
+
+  // Tracks existence of each referenced Secret. Keyed by `${namespace}/${name}`,
+  // value is one of 'loading' | 'exists' | 'missing'.
+  public secretStatuses = signal<Record<string, 'loading' | 'exists' | 'missing'>>({});
 
   constructor() {
     // Debug: Log the full Luigi context whenever it changes
@@ -132,6 +139,7 @@ export class CowboysComponent {
         this.cowboys.set(cowboys);
         this.loading.set(false);
         LuigiClient.uxManager().hideLoadingIndicator();
+        this.refreshSecretStatuses(cowboys);
       },
       error: (err) => {
         console.error('Failed to load cowboys:', err);
@@ -265,6 +273,49 @@ export class CowboysComponent {
       .catch(() => {
         console.log('Cowboy deletion cancelled');
       });
+  }
+
+  public secretKey(namespace: string | undefined, name: string): string {
+    return `${namespace ?? ''}/${name}`;
+  }
+
+  public getSecretStatus(namespace: string | undefined, name: string): 'loading' | 'exists' | 'missing' {
+    return this.secretStatuses()[this.secretKey(namespace, name)] ?? 'loading';
+  }
+
+  /**
+   * Fan out an existence check per unique (namespace, name) referenced by
+   * any cowboy. Statuses start as 'loading' and resolve to 'exists' or 'missing'.
+   */
+  private refreshSecretStatuses(cowboys: Cowboy[]): void {
+    const refs = new Map<string, { name: string; namespace: string }>();
+    for (const c of cowboys) {
+      const namespace = c.metadata.namespace;
+      if (!namespace) continue;
+      for (const ref of c.spec.secretRefs ?? []) {
+        refs.set(this.secretKey(namespace, ref.name), { name: ref.name, namespace });
+      }
+    }
+
+    if (refs.size === 0) {
+      this.secretStatuses.set({});
+      return;
+    }
+
+    const initial: Record<string, 'loading' | 'exists' | 'missing'> = {};
+    for (const key of refs.keys()) {
+      initial[key] = 'loading';
+    }
+    this.secretStatuses.set(initial);
+
+    for (const [key, { name, namespace }] of refs) {
+      this.cowboysService.secretExists(name, namespace).subscribe((exists) => {
+        this.secretStatuses.update((prev) => ({
+          ...prev,
+          [key]: exists ? 'exists' : 'missing',
+        }));
+      });
+    }
   }
 
   public getInitials(name: string): string {

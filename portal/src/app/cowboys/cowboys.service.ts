@@ -17,6 +17,10 @@ import { Injectable, inject } from '@angular/core';
 import { LuigiContextService } from '@luigi-project/client-support-angular';
 import { from, map, Observable, of, switchMap, catchError, filter } from 'rxjs';
 
+export interface SecretRef {
+  name: string;
+}
+
 export interface Cowboy {
   metadata: {
     name: string;
@@ -25,6 +29,7 @@ export interface Cowboy {
   };
   spec: {
     intent?: string;
+    secretRefs?: SecretRef[];
   };
   status?: {
     result?: string;
@@ -68,11 +73,26 @@ const LIST_COWBOYS_QUERY = `
             }
             spec {
               intent
+              secretRefs {
+                name
+              }
             }
             status {
               result
             }
           }
+        }
+      }
+    }
+  }
+`;
+
+const GET_SECRET_QUERY = `
+  query GetSecret($name: String!, $namespace: String!) {
+    v1 {
+      Secret(name: $name, namespace: $namespace) {
+        metadata {
+          name
         }
       }
     }
@@ -261,6 +281,30 @@ export class CowboysService {
         console.error('Error creating cowboy:', error);
         return of(false);
       })
+    );
+  }
+
+  /**
+   * Check whether a Secret exists in the given namespace.
+   * Returns true if the resource is reachable and present, false if missing
+   * (NotFound) or inaccessible (e.g. forbidden by RBAC).
+   */
+  secretExists(name: string, namespace: string): Observable<boolean> {
+    return this.getGraphQLConfig().pipe(
+      switchMap(({ endpoint, token }) =>
+        from(
+          fetch(endpoint, {
+            method: 'POST',
+            headers: this.buildHeaders(token),
+            body: JSON.stringify({
+              query: GET_SECRET_QUERY,
+              variables: { name, namespace },
+            }),
+          }).then((res) => res.json())
+        )
+      ),
+      map((response: any) => !!response?.data?.v1?.Secret?.metadata?.name),
+      catchError(() => of(false))
     );
   }
 

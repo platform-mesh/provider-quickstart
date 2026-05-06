@@ -98,6 +98,26 @@
                   {{ cowboy.status?.result || 'Pending' }}
                 </span>
               </div>
+              @if (cowboy.spec.secretRefs?.length) {
+                <div class="tile-field tile-field--stack">
+                  <ui5-label>Secret Refs</ui5-label>
+                  <div class="secret-refs">
+                    @for (ref of cowboy.spec.secretRefs; track ref.name) {
+                      @let status = getSecretStatus(cowboy.metadata.namespace, ref.name);
+                      <span class="secret-chip" [class.exists]="status === 'exists'" [class.missing]="status === 'missing'" [class.loading]="status === 'loading'">
+                        @if (status === 'exists') {
+                          <ui5-icon name="accept" class="secret-icon"></ui5-icon>
+                        } @else if (status === 'missing') {
+                          <ui5-icon name="error" class="secret-icon"></ui5-icon>
+                        } @else {
+                          <ui5-icon name="pending" class="secret-icon"></ui5-icon>
+                        }
+                        <span class="secret-name">{{ ref.name }}</span>
+                      </span>
+                    }
+                  </div>
+                </div>
+              }
             </div>
             <div class="tile-footer">
               <ui5-icon name="calendar" class="footer-icon"></ui5-icon>
