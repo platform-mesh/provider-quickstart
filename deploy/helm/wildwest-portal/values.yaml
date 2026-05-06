@@ -46,6 +46,7 @@ ingress:
 
 httpRoute:
   enabled: false
+  namespace: platform-mesh-system
   hostnames:
     - portal.localhost
     - "*.portal.localhost"
@@ -67,6 +68,7 @@ httpRoute:
 
 middleware:
   enabled: false
+  namespace: platform-mesh-system
   corsOrigins:
     - http://localhost:4200
     - http://*.localhost:4200
