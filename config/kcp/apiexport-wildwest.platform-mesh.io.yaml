@@ -6,14 +6,13 @@ metadata:
   name: wildwest.platform-mesh.io
 spec:
   permissionClaims:
-  - group: ""
-    resource: events
+  - resource: events
     verbs:
     - '*'
   resources:
   - group: wildwest.platform-mesh.io
     name: cowboys
-    schema: v260123-6b19cba.cowboys.wildwest.platform-mesh.io
+    schema: v260506-995936a.cowboys.wildwest.platform-mesh.io
     storage:
       crd: {}
 status: {}

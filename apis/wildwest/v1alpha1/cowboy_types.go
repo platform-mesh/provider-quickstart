@@ -25,6 +25,16 @@ type CowboySpec struct {
 	// Intent is the desired action for the cowboy
 	// +optional
 	Intent string `json:"intent,omitempty"`
+
+	// SecretRefs is an array of references to Secrets containing cowboy credentials
+	// +optional
+	SecretRefs []SecretReference `json:"secretRefs,omitempty"`
+}
+
+// SecretReference references a Secret by name in the same namespace as the Cowboy.
+type SecretReference struct {
+	// Name of the referenced Secret
+	Name string `json:"name"`
 }
 
 // CowboyStatus defines the observed state of Cowboy
