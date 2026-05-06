@@ -10,7 +10,7 @@ spec:
   from:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
-      namespace: {{ .Values.httpRoute.referenceGrant.fromNamespace | default "platform-mesh-system" }}
+      namespace: {{ .Values.httpRoute.referenceGrant.fromNamespace | default .Values.httpRoute.namespace | default "platform-mesh-system" }}
   to:
     - group: ""
       kind: Service

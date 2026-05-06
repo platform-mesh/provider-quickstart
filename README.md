@@ -93,7 +93,7 @@ KUBECONFIG=$PM_KUBECONFIG kubectl ws create quickstart --type=root:provider --en
 Build and run the bootstrap to register your provider:
 
 ```bash
-KUBECONFIG=$PM_KUBECONFIG make init HOST_OVERRIDE=https://frontproxy-front-proxy.platform-mesh-system:6443
+KUBECONFIG=$PM_KUBECONFIG make init HOST_OVERRIDE=https://frontproxy-front-proxy.platform-mesh-system:8443
 ```
 
 This applies all kcp and provider resources to register your provider and created dedicated 
