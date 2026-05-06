@@ -1,7 +1,7 @@
 apiVersion: apis.kcp.io/v1alpha1
 kind: APIResourceSchema
 metadata:
-  name: v260123-6b19cba.cowboys.wildwest.platform-mesh.io
+  name: v260506-995936a.cowboys.wildwest.platform-mesh.io
 spec:
   group: wildwest.platform-mesh.io
   names:
@@ -45,6 +45,20 @@ spec:
             intent:
               description: Intent is the desired action for the cowboy
               type: string
+            secretRefs:
+              description: SecretRefs is an array of references to Secrets containing
+                cowboy credentials
+              items:
+                description: SecretReference references a Secret by name in the same
+                  namespace as the Cowboy.
+                properties:
+                  name:
+                    description: Name of the referenced Secret
+                    type: string
+                required:
+                - name
+                type: object
+              type: array
           type: object
         status:
           description: CowboyStatus defines the observed state of Cowboy
