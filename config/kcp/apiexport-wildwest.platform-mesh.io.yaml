@@ -11,8 +11,18 @@ spec:
     - '*'
   resources:
   - group: wildwest.platform-mesh.io
+    name: armaments
+    schema: v260512-977c1bd.armaments.wildwest.platform-mesh.io
+    storage:
+      virtual:
+        identityHash: 2aa635c811395932a55e595f5b1ce91fc25734b0f090ffb81d91e6f73ffbc10b
+        reference:
+          apiGroup: cache.kcp.io
+          kind: CachedResourceEndpointSlice
+          name: armaments
+  - group: wildwest.platform-mesh.io
     name: cowboys
-    schema: v260506-995936a.cowboys.wildwest.platform-mesh.io
+    schema: v260512-977c1bd.cowboys.wildwest.platform-mesh.io
     storage:
       crd: {}
 status: {}

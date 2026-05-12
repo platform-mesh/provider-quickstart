@@ -29,11 +29,22 @@ type CowboySpec struct {
 	// SecretRefs is an array of references to Secrets containing cowboy credentials
 	// +optional
 	SecretRefs []SecretReference `json:"secretRefs,omitempty"`
+
+	// ArmamentRef references a standard Armament from the catalog exposed by
+	// the provider workspace as a cached resource.
+	// +optional
+	ArmamentRef *ArmamentReference `json:"armamentRef,omitempty"`
 }
 
 // SecretReference references a Secret by name in the same namespace as the Cowboy.
 type SecretReference struct {
 	// Name of the referenced Secret
+	Name string `json:"name"`
+}
+
+// ArmamentReference references an Armament from the catalog by name.
+type ArmamentReference struct {
+	// Name of the referenced Armament.
 	Name string `json:"name"`
 }
 

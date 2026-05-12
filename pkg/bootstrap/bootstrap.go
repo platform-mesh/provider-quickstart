@@ -47,6 +47,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	configcontroller "github.com/platform-mesh/provider-quickstart/config/controller"
+	configcrds "github.com/platform-mesh/provider-quickstart/config/crds"
 	configkcp "github.com/platform-mesh/provider-quickstart/config/kcp"
 	configprovider "github.com/platform-mesh/provider-quickstart/config/provider"
 )
@@ -75,6 +76,15 @@ func Bootstrap(ctx context.Context, config *rest.Config, hostOverride string) er
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(cache)
 
 	logger := klog.FromContext(ctx)
+
+	// Bootstrap CRDs that live in the provider workspace itself. The
+	// armaments CRD must be installed here so the armament-sync controller
+	// can store catalog objects that are then replicated to consumers via a
+	// CachedResource.
+	logger.Info("Bootstrapping provider-workspace CRDs")
+	if err := bootstrapFS(ctx, dynamicClient, mapper, cache, configcrds.ProviderFS); err != nil {
+		return fmt.Errorf("failed to bootstrap provider-workspace CRDs: %w", err)
+	}
 
 	// Bootstrap kcp resources (APIResourceSchema, APIExport)
 	logger.Info("Bootstrapping kcp resources")
@@ -308,27 +318,36 @@ func createResource(ctx context.Context, client dynamic.Interface, mapper meta.R
 		return fmt.Errorf("failed to get REST mapping for %s: %w", gvk, err)
 	}
 
-	logger.Info("creating resource", "resource", m.Resource.String())
-	_, err = client.Resource(m.Resource).Namespace(u.GetNamespace()).Create(ctx, u, metav1.CreateOptions{})
-	if err != nil {
-		if apierrors.IsAlreadyExists(err) {
-			logger.Info("resource already exists, updating")
-			existing, err := client.Resource(m.Resource).Namespace(u.GetNamespace()).Get(ctx, u.GetName(), metav1.GetOptions{})
-			if err != nil {
-				return fmt.Errorf("failed to get existing %s %s: %w", gvk.Kind, u.GetName(), err)
-			}
-
-			u.SetResourceVersion(existing.GetResourceVersion())
-			if _, err = client.Resource(m.Resource).Namespace(u.GetNamespace()).Update(ctx, u, metav1.UpdateOptions{}); err != nil {
-				return fmt.Errorf("failed to update %s %s: %w", gvk.Kind, u.GetName(), err)
-			}
-			logger.Info("updated resource")
-			return nil
-		}
-		logger.Error(err, "failed to create resource")
-		return fmt.Errorf("failed to create %s %s: %w", gvk.Kind, u.GetName(), err)
+	// HACK: get-then-create-or-update flow until a kcp release with the
+	// CachedResource admission fix is available. The admission plugin
+	// rejects same-name re-applies with Forbidden before the storage
+	// layer can return AlreadyExists, so a Create+IsAlreadyExists pattern
+	// would loop here. Revert to the simpler form once provider-quickstart
+	// vendors a kcp version containing the admission patch.
+	// TODO: Remove this once kcp 0.32 is the minimum required version, which contains the fix for this issue.
+	// See https://github.com/kcp-dev/kcp/pull/4119 for details.
+	resourceClient := client.Resource(m.Resource).Namespace(u.GetNamespace())
+	existing, getErr := resourceClient.Get(ctx, u.GetName(), metav1.GetOptions{})
+	if getErr != nil && !apierrors.IsNotFound(getErr) {
+		logger.Error(getErr, "failed to check for existing resource")
+		return fmt.Errorf("failed to get %s %s: %w", gvk.Kind, u.GetName(), getErr)
 	}
 
-	logger.Info("created resource")
+	if apierrors.IsNotFound(getErr) {
+		logger.Info("creating resource", "resource", m.Resource.String())
+		if _, err := resourceClient.Create(ctx, u, metav1.CreateOptions{}); err != nil {
+			logger.Error(err, "failed to create resource")
+			return fmt.Errorf("failed to create %s %s: %w", gvk.Kind, u.GetName(), err)
+		}
+		logger.Info("created resource")
+		return nil
+	}
+
+	logger.Info("resource already exists, updating")
+	u.SetResourceVersion(existing.GetResourceVersion())
+	if _, err := resourceClient.Update(ctx, u, metav1.UpdateOptions{}); err != nil {
+		return fmt.Errorf("failed to update %s %s: %w", gvk.Kind, u.GetName(), err)
+	}
+	logger.Info("updated resource")
 	return nil
 }

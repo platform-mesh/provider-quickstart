@@ -233,6 +233,50 @@
   }
 }
 
+.armament-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.375rem;
+  background-color: var(--sapInformationBackground);
+  border: 1px solid var(--sapInformationBorderColor);
+  color: var(--sapInformationTextColor);
+  max-width: 100%;
+
+  .armament-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .armament-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .armament-name {
+    font-weight: 600;
+    font-size: 0.8125rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .armament-meta {
+    font-size: 0.6875rem;
+    opacity: 0.85;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  &.armament-chip--missing {
+    background-color: var(--sapNeutralBackground);
+    border-color: var(--sapNeutralBorderColor);
+    color: var(--sapNeutralTextColor);
+  }
+}
+
 .status-badge {
   padding: 0.25rem 0.75rem;
   border-radius: 1rem;

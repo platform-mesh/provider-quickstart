@@ -10,6 +10,14 @@ rules:
   - apiGroups: ["wildwest.platform-mesh.io"]
     resources: ["cowboys/status"]
     verbs: ["get", "update", "patch"]
+  # Full access to Armaments resources (managed by the armament-sync controller
+  # in the provider workspace; consumers see them read-only via CachedResource).
+  - apiGroups: ["wildwest.platform-mesh.io"]
+    resources: ["armaments"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["wildwest.platform-mesh.io"]
+    resources: ["armaments/status"]
+    verbs: ["get", "update", "patch"]
   # Events
   - apiGroups: [""]
     resources: ["events"]

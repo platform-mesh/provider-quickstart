@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: armaments-cr-identity
+  namespace: kcp-system
+stringData:
+  key: armaments-cr-identity-key

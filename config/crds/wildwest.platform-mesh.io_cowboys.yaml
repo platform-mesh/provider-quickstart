@@ -46,6 +46,17 @@ spec:
           spec:
             description: CowboySpec defines the desired state of Cowboy
             properties:
+              armamentRef:
+                description: |-
+                  ArmamentRef references a standard Armament from the catalog exposed by
+                  the provider workspace as a cached resource.
+                properties:
+                  name:
+                    description: Name of the referenced Armament.
+                    type: string
+                required:
+                - name
+                type: object
               intent:
                 description: Intent is the desired action for the cowboy
                 type: string

@@ -45,7 +45,7 @@ import '@ui5/webcomponents-icons/dist/pending.js';
 import '@ui5/webcomponents-icons/dist/person-placeholder.js';
 import '@ui5/webcomponents-icons/dist/refresh.js';
 
-import { Cowboy, CowboysService, Namespace } from './cowboys.service';
+import { Armament, Cowboy, CowboysService, Namespace } from './cowboys.service';
 
 @Component({
   selector: 'app-cowboys',
@@ -81,11 +81,15 @@ export class CowboysComponent {
 
   public cowboys = signal<Cowboy[]>([]);
   public namespaces = signal<Namespace[]>([]);
+  public armaments = signal<Armament[]>([]);
   public loading = signal<boolean>(true);
   public showAddDialog = signal<boolean>(false);
   public newCowboyName = signal<string>('');
   public newCowboyNamespace = signal<string>('');
   public newCowboyIntent = signal<string>('');
+  // Empty string means "no armament" — the create dialog leaves this unset
+  // by default, and the mutation skips the armamentRef field entirely.
+  public newCowboyArmament = signal<string>('');
 
   // Tracks existence of each referenced Secret. Keyed by `${namespace}/${name}`,
   // value is one of 'loading' | 'exists' | 'missing'.
@@ -113,7 +117,15 @@ export class CowboysComponent {
       // Show Luigi's loading indicator while fetching data
       LuigiClient.uxManager().showLoadingIndicator();
       this.loadNamespaces();
+      this.loadArmaments();
       this.loadCowboys();
+    });
+  }
+
+  public loadArmaments(): void {
+    this.cowboysService.listArmaments().subscribe({
+      next: (armaments) => this.armaments.set(armaments),
+      error: (err) => console.error('Failed to load armaments:', err),
     });
   }
 
@@ -157,6 +169,7 @@ export class CowboysComponent {
   public openAddDialog(): void {
     this.newCowboyName.set('');
     this.newCowboyIntent.set('');
+    this.newCowboyArmament.set('');
     // Pre-select first namespace if available
     if (this.namespaces().length > 0) {
       this.newCowboyNamespace.set(this.namespaces()[0].metadata.name);
@@ -183,6 +196,11 @@ export class CowboysComponent {
     this.newCowboyNamespace.set(select.selectedOption?.value || '');
   }
 
+  public onArmamentChange(event: Event): void {
+    const select = event.target as any;
+    this.newCowboyArmament.set(select.selectedOption?.value || '');
+  }
+
   public confirmAddCowboy(): void {
     const name = this.newCowboyName().trim();
     const namespace = this.newCowboyNamespace().trim();
@@ -206,7 +224,8 @@ export class CowboysComponent {
       return;
     }
 
-    this.cowboysService.createCowboy(name, namespace, intent || undefined).subscribe({
+    const armament = this.newCowboyArmament().trim();
+    this.cowboysService.createCowboy(name, namespace, intent || undefined, armament || undefined).subscribe({
       next: (success) => {
         if (success) {
           LuigiClient.uxManager().showAlert({
@@ -316,6 +335,16 @@ export class CowboysComponent {
         }));
       });
     }
+  }
+
+  /**
+   * Look up the catalog Armament for a cowboy's reference. Returns undefined
+   * if the catalog hasn't loaded yet or the referenced armament is gone (the
+   * controller might race with a sync that just deleted the catalog entry).
+   */
+  public armamentFor(name: string | undefined): Armament | undefined {
+    if (!name) return undefined;
+    return this.armaments().find((a) => a.metadata.name === name);
   }
 
   public getInitials(name: string): string {

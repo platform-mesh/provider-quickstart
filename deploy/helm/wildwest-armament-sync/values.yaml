@@ -1,0 +1,56 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/platform-mesh/provider-quickstart-armament-sync
+  pullPolicy: IfNotPresent
+  tag: "0.1.0"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 65532
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Syncer configuration
+syncer:
+  # How often to reconcile the local Armament catalog against the external source.
+  interval: 30s
+
+# kcp kubeconfig secret. The syncer needs write access to Armament CRs in the
+# provider workspace, so it reuses the same controller kubeconfig produced by
+# `make init` unless overridden.
+kubeconfig:
+  secretName: "wildwest-controller-kubeconfig"
+  secretKey: "kubeconfig"

@@ -1,7 +1,7 @@
 apiVersion: apis.kcp.io/v1alpha1
 kind: APIResourceSchema
 metadata:
-  name: v260506-995936a.cowboys.wildwest.platform-mesh.io
+  name: v260512-977c1bd.cowboys.wildwest.platform-mesh.io
 spec:
   group: wildwest.platform-mesh.io
   names:
@@ -42,6 +42,17 @@ spec:
         spec:
           description: CowboySpec defines the desired state of Cowboy
           properties:
+            armamentRef:
+              description: |-
+                ArmamentRef references a standard Armament from the catalog exposed by
+                the provider workspace as a cached resource.
+              properties:
+                name:
+                  description: Name of the referenced Armament.
+                  type: string
+              required:
+              - name
+              type: object
             intent:
               description: Intent is the desired action for the cowboy
               type: string

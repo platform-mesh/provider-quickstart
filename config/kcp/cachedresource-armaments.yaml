@@ -1,0 +1,12 @@
+apiVersion: cache.kcp.io/v1alpha1
+kind: CachedResource
+metadata:
+  name: armaments
+spec:
+  group: wildwest.platform-mesh.io
+  resource: armaments
+  version: v1alpha1
+  identity:
+    secretRef:
+      name: armaments-cr-identity
+      namespace: kcp-system

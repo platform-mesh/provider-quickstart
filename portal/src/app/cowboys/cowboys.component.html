@@ -98,6 +98,27 @@
                   {{ cowboy.status?.result || 'Pending' }}
                 </span>
               </div>
+              @if (cowboy.spec.armamentRef?.name) {
+                @let armament = armamentFor(cowboy.spec.armamentRef?.name);
+                <div class="tile-field tile-field--stack">
+                  <ui5-label>Armament</ui5-label>
+                  <div class="armament-chip" [class.armament-chip--missing]="!armament">
+                    <ui5-icon name="add" class="armament-icon"></ui5-icon>
+                    <div class="armament-text">
+                      <span class="armament-name">{{ armament?.spec?.displayName || cowboy.spec.armamentRef?.name }}</span>
+                      @if (armament?.spec?.kind || armament?.spec?.damage || armament?.spec?.range) {
+                        <span class="armament-meta">
+                          @if (armament?.spec?.kind) { {{ armament?.spec?.kind }} }
+                          @if (armament?.spec?.damage) { · dmg {{ armament?.spec?.damage }} }
+                          @if (armament?.spec?.range) { · rng {{ armament?.spec?.range }}m }
+                        </span>
+                      } @else if (!armament) {
+                        <span class="armament-meta">not in catalog</span>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
               @if (cowboy.spec.secretRefs?.length) {
                 <div class="tile-field tile-field--stack">
                   <ui5-label>Secret Refs</ui5-label>
@@ -167,6 +188,20 @@
         [value]="newCowboyIntent()"
         (input)="onIntentInput($event)"
       ></ui5-input>
+    </div>
+    <div class="form-field">
+      <ui5-label for="cowboy-armament">Armament</ui5-label>
+      <ui5-select
+        id="cowboy-armament"
+        (change)="onArmamentChange($event)"
+      >
+        <ui5-option [value]="''" [selected]="newCowboyArmament() === ''">— None —</ui5-option>
+        @for (a of armaments(); track a.metadata.name) {
+          <ui5-option [value]="a.metadata.name" [selected]="a.metadata.name === newCowboyArmament()">
+            {{ a.spec.displayName || a.metadata.name }}@if (a.spec.kind) { ({{ a.spec.kind }}) }
+          </ui5-option>
+        }
+      </ui5-select>
     </div>
   </div>
   <div slot="footer" class="dialog-footer">

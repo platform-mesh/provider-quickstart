@@ -54,11 +54,18 @@ The `ui.platform-mesh.io/content-for` label is critical - it associates your UI 
 ```
 ├── cmd/
 │   ├── init/              # Bootstrap CLI tool
-│   └── wild-west/         # Provider operator
+│   ├── wild-west/         # Provider operator (consumer-workspace controller via APIExport)
+│   └── armament-sync/     # Catalog syncer (provider-workspace controller, ticker-driven)
 ├── config/
-│   ├── kcp/               # kcp resources (APIExport, APIResourceSchema)
+│   ├── crds/              # CRDs (armaments CRD also installed in the provider workspace)
+│   ├── kcp/               # kcp resources (APIExport, APIResourceSchema, CachedResource)
 │   └── provider/          # Provider resources (ProviderMetadata, ContentConfiguration, RBAC)
-├── pkg/bootstrap/         # Bootstrap logic for applying resources
+├── operator/
+│   ├── wild-west/         # Cowboy reconciler
+│   └── armament-sync/     # Armament catalog reconciler
+├── pkg/
+│   ├── bootstrap/         # Bootstrap logic for applying resources
+│   └── external/          # External-source client interface (+ static dev client)
 └── portal/                # Custom UI microfrontend example (Angular + Luigi)
 ```
 
@@ -147,6 +154,16 @@ KUBECONFIG=$COMPUTE_KUBECONFIG helm upgrade --install wildwest-controller ./depl
   --set common.defaults.hostAliases.enabled=true
 ```
 
+Deploy the armament-sync controller (runs in the provider workspace and syncs the catalog from an external source — currently a static hardcoded list — into `Armament` CRs that are then exposed read-only to consumer workspaces via a `CachedResource`). It ships as its own image (`provider-quickstart-armament-sync`), built and loaded by `make images kind-load-all`:
+
+```bash
+KUBECONFIG=$COMPUTE_KUBECONFIG helm upgrade --install wildwest-armament-sync ./deploy/helm/wildwest-armament-sync \
+  --namespace provider-cowboys \
+  --set image.tag=$IMAGE_TAG \
+  --set image.pullPolicy=IfNotPresent \
+  --set common.defaults.hostAliases.enabled=true
+```
+kui
 Deploy the portal microfrontend:
 
 ```bash
@@ -165,6 +182,118 @@ To upgrade after rebuilding images:
 make images kind-load-all IMAGE_TAG=$IMAGE_TAG
 KUBECONFIG=$COMPUTE_KUBECONFIG kubectl rollout restart deployment -n provider-cowboys
 ```
+
+### 8. Try It Out: Cowboys with Secret Refs
+
+The `Cowboy` CRD has an optional `spec.secretRefs[]` field that lists Secrets the cowboy depends on. The portal microfrontend renders one chip per reference and calls the GraphQL gateway to check whether each Secret actually exists:
+
+- **Green chip** — Secret resolved (`v1.Secret(name, namespace)` returned metadata).
+- **Red chip** — Secret missing (NotFound) or inaccessible (RBAC forbidden, network error).
+- **Neutral chip** — existence check is in flight (transient on first paint).
+
+Cowboys without `secretRefs` show no chips row at all, so the existing tiles are unchanged.
+
+> **Note:** the snippet below targets a **consumer workspace** that has the `wildwest.platform-mesh.io` APIExport bound — it is **not** the provider workspace from the bootstrap steps above. Today the only supported way to provision and switch into such a workspace is via the **Platform Mesh CLI** (`pm`); plain `kubectl`/`kubectl ws` against the provider workspace will not work because the `Cowboy` API is not served there. Use `pm` to create/select your consumer workspace first, then export its kubeconfig as `KUBECONFIG` and run:
+
+```bash
+NAMESPACE=default  # change to whatever namespace you're testing in
+
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: colt-45-permit
+  namespace: ${NAMESPACE}
+type: Opaque
+stringData:
+  serial_number: C45-123456
+  permit_date: "1881-04-15"
+  issued_by: Tombstone Marshal
+---
+apiVersion: wildwest.platform-mesh.io/v1alpha1
+kind: Cowboy
+metadata:
+  name: billy-the-kid
+  namespace: ${NAMESPACE}
+spec:
+  intent: Ride the range and protect the cattle
+  secretRefs:
+    - name: colt-45-permit       # exists -> green chip
+    - name: missing-saddlebag    # does NOT exist -> red chip
+---
+apiVersion: wildwest.platform-mesh.io/v1alpha1
+kind: Cowboy
+metadata:
+  name: lonely-ranger
+  namespace: ${NAMESPACE}
+spec:
+  intent: Ride alone
+  # no secretRefs -> Secret Refs row is hidden in the UI
+EOF
+```
+
+Open the Cowboys page in the Portal and refresh. The `billy-the-kid` tile shows one green chip (`colt-45-permit`) and one red chip (`missing-saddlebag`); `lonely-ranger` shows no Secret Refs row.
+
+Clean up:
+
+```bash
+kubectl delete -n "$NAMESPACE" cowboy billy-the-kid lonely-ranger
+kubectl delete -n "$NAMESPACE" secret colt-45-permit
+```
+
+### 9. Try It Out: Armaments Catalog (CachedResource)
+
+`Armament` is a cluster-scoped catalog type populated by the `armament-sync` controller from an external source (currently a static hardcoded list in `pkg/external/static`). The catalog lives in the **provider workspace** and is replicated to consumers read-only via a kcp `CachedResource` bound to the `wildwest.platform-mesh.io` APIExport.
+
+Architecture:
+
+```
+External source ──poll(ticker)──> armament-sync ──writes──> Armament CRs (provider workspace)
+                                                                  │
+                                                           CachedResource
+                                                                  │
+                                                                  ▼
+                                                consumer workspaces (read-only)
+                                                                  │
+                                                                  ▼
+                                              Cowboy.spec.armamentRef → name lookup
+```
+
+Two binaries, deployed independently:
+
+| Binary | Workspace | Role |
+|--------|-----------|------|
+| `wild-west` | consumer (via APIExport endpoint slice) | Reconciles `Cowboy` objects users create |
+| `armament-sync` | provider (direct kubeconfig) | Pulls the external catalog on a timer, upserts/deletes `Armament` CRs |
+
+Verify in the **provider workspace** that armaments appear after the syncer's first tick:
+
+```bash
+KUBECONFIG=./operator.kubeconfig kubectl get armaments
+# NAME              KIND       DAMAGE   RANGE
+# bowie-knife       blade      30       2
+# colt-saa          revolver   50       50
+# lasso             rope       5        10
+# winchester-1873   rifle      80       400
+```
+
+In a **consumer workspace** (one that has bound the `wildwest.platform-mesh.io` APIExport), the same list is visible read-only and can be referenced from a `Cowboy`:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: wildwest.platform-mesh.io/v1alpha1
+kind: Cowboy
+metadata:
+  name: armed-pete
+  namespace: ${NAMESPACE:-default}
+spec:
+  intent: Patrol the canyon
+  armamentRef:
+    name: winchester-1873
+EOF
+```
+
+Attempting to `kubectl edit armament` from the consumer workspace will fail — the cached resource is read-only. To change the catalog, modify the external source (today: edit `pkg/external/static/client.go` and rebuild) or swap the static client for a real backend implementing `external.Client`.
 
 ## Debugging
 
@@ -228,19 +357,23 @@ Go types (apis/) → controller-gen → CRDs (config/crds/) → apigen → APIRe
 
 | Target | Description |
 |--------|-------------|
-| `make build` | Build all binaries (operator + init) |
+| `make build` | Build all binaries (operator + init + armament-sync) |
 | `make build-operator` | Build the wild-west operator binary |
 | `make build-init` | Build the init/bootstrap binary |
+| `make build-armament-sync` | Build the armament-sync controller binary |
 | `make run` | Run the wild-west operator locally |
+| `make run-armament-sync` | Run the armament-sync controller locally |
 | `make init` | Bootstrap provider resources into workspace (requires KUBECONFIG, optional HOST_OVERRIDE) |
 | `make generate` | Generate code (deepcopy) and kcp resources |
 | `make manifests` | Generate CRD manifests from Go types |
 | `make apiresourceschemas` | Generate APIResourceSchemas from CRDs |
 | `make image-build` | Build controller container image |
 | `make portal-image-build` | Build portal container image |
-| `make images` | Build all container images |
+| `make armament-sync-image-build` | Build armament-sync container image |
+| `make images` | Build all container images (controller + portal + armament-sync) |
 | `make kind-load` | Load controller image into kind cluster |
 | `make kind-load-portal` | Load portal image into kind cluster |
+| `make kind-load-armament-sync` | Load armament-sync image into kind cluster |
 | `make kind-load-all` | Load all images into kind cluster |
 | `make tools` | Install all required tools (controller-gen, apigen) |
 | `make fmt` | Run go fmt |

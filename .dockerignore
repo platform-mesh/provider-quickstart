@@ -1,0 +1,24 @@
+# Build artifacts and dependencies that must NOT be copied into images.
+# Keeping the host's node_modules out is required: COPY portal/ in the
+# portal Dockerfile would otherwise overlay host-platform binaries on top
+# of the Linux node_modules installed by `npm ci`, causing esbuild
+# host/binary version mismatches.
+**/node_modules
+portal/dist
+
+# Go build outputs
+bin/
+hack/tools/
+
+# VCS / editor / OS noise
+.git
+.github
+.idea
+.vscode
+.DS_Store
+
+# Local-only files
+*.log
+*.tmp
+.env
+.env.*

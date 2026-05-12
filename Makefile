@@ -42,6 +42,7 @@ GOFMT = $(GOCMD) fmt
 # Binary names
 BINARY_NAME = wild-west
 INIT_BINARY_NAME = wild-west-init
+ARMAMENT_SYNC_BINARY_NAME = armament-sync
 
 # Build directory
 BUILD_DIR = bin
@@ -57,12 +58,16 @@ PORTAL_IMAGE_NAME ?= provider-quickstart-portal
 PORTAL_IMAGE ?= $(IMAGE_REGISTRY)/$(PORTAL_IMAGE_NAME):$(IMAGE_TAG)
 PORTAL_PORT ?= 4200
 
+# Armament-sync image parameters
+ARMAMENT_SYNC_IMAGE_NAME ?= provider-quickstart-armament-sync
+ARMAMENT_SYNC_IMAGE ?= $(IMAGE_REGISTRY)/$(ARMAMENT_SYNC_IMAGE_NAME):$(IMAGE_TAG)
+
 .PHONY: all
 all: build
 
 ## build: Build all binaries
 .PHONY: build
-build: build-operator build-init
+build: build-operator build-init build-armament-sync
 
 ## build-operator: Build the wild-west operator binary
 .PHONY: build-operator
@@ -74,10 +79,20 @@ build-operator: fmt vet
 build-init: fmt vet
 	$(GOBUILD) -o $(BUILD_DIR)/$(INIT_BINARY_NAME) ./cmd/init/...
 
+## build-armament-sync: Build the armament-sync controller binary
+.PHONY: build-armament-sync
+build-armament-sync: fmt vet
+	$(GOBUILD) -o $(BUILD_DIR)/$(ARMAMENT_SYNC_BINARY_NAME) ./cmd/armament-sync/...
+
 ## run: Run the wild-west operator locally
 .PHONY: run
 run: fmt vet
 	$(GORUN) ./cmd/wild-west/main.go --endpointslice=wildwest.platform-mesh.io
+
+## run-armament-sync: Run the armament-sync controller locally
+.PHONY: run-armament-sync
+run-armament-sync: fmt vet
+	$(GORUN) ./cmd/armament-sync/main.go --sync-interval=30s
 
 ## init: Bootstrap provider resources into workspace (requires KUBECONFIG, optional HOST_OVERRIDE)
 HOST_OVERRIDE ?=
@@ -98,7 +113,7 @@ manifests: $(CONTROLLER_GEN)
 ## apiresourceschemas: Generate APIResourceSchemas from CRDs
 .PHONY: apiresourceschemas
 apiresourceschemas: manifests $(APIGEN)
-	$(APIGEN) --input-dir=config/crds --output-dir=config/kcp
+	$(APIGEN) --input-dir=config/crds --output-dir=config/kcp --preserve-resources
 
 ## fmt: Run go fmt
 .PHONY: fmt
@@ -135,13 +150,23 @@ portal-image-build:
 portal-image-push: portal-image-build
 	docker push $(PORTAL_IMAGE)
 
+## armament-sync-image-build: Build armament-sync container image locally
+.PHONY: armament-sync-image-build
+armament-sync-image-build:
+	docker build -t $(ARMAMENT_SYNC_IMAGE) -f deploy/armament-sync.Dockerfile .
+
+## armament-sync-image-push: Push armament-sync container image to registry
+.PHONY: armament-sync-image-push
+armament-sync-image-push: armament-sync-image-build
+	docker push $(ARMAMENT_SYNC_IMAGE)
+
 ## images: Build all container images
 .PHONY: images
-images: image-build portal-image-build
+images: image-build portal-image-build armament-sync-image-build
 
 ## images-push: Push all container images
 .PHONY: images-push
-images-push: image-push portal-image-push
+images-push: image-push portal-image-push armament-sync-image-push
 
 # Kind cluster parameters
 KIND_CLUSTER ?= platform-mesh
@@ -156,9 +181,14 @@ kind-load: image-build
 kind-load-portal: portal-image-build
 	kind load docker-image $(PORTAL_IMAGE) --name $(KIND_CLUSTER)
 
+## kind-load-armament-sync: Load armament-sync image into kind cluster
+.PHONY: kind-load-armament-sync
+kind-load-armament-sync: armament-sync-image-build
+	kind load docker-image $(ARMAMENT_SYNC_IMAGE) --name $(KIND_CLUSTER)
+
 ## kind-load-all: Load all images into kind cluster
 .PHONY: kind-load-all
-kind-load-all: kind-load kind-load-portal
+kind-load-all: kind-load kind-load-portal kind-load-armament-sync
 
 ## portal-run: Run portal container locally (accessible at http://localhost:$(PORTAL_PORT))
 .PHONY: portal-run
