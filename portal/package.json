@@ -33,12 +33,12 @@
     "@ui5/webcomponents-ngx": "^0.5.10",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
-    "zone.js": "~0.15.0"
+    "zone.js": "~0.16.0"
   },
   "devDependencies": {
-    "@angular/build": "^20.3.24",
-    "@angular/cli": "^20.3.24",
-    "@angular/compiler-cli": "^20.3.19",
+    "@angular/build": "20.3.24",
+    "@angular/cli": "20.3.24",
+    "@angular/compiler-cli": "20.3.19",
     "@types/jasmine": "6.0.0",
     "jasmine-core": "6.1.0",
     "karma": "6.4.4",
@@ -46,7 +46,7 @@
     "karma-coverage": "2.2.1",
     "karma-jasmine": "5.1.0",
     "karma-jasmine-html-reporter": "2.2.0",
-    "typescript": "~5.9.2"
+    "typescript": "5.9.3"
   },
   "overrides": {
     "vite": "^7.3.2",
