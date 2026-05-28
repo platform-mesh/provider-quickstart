@@ -1,6 +1,6 @@
 module github.com/platform-mesh/provider-quickstart
 
-go 1.26.0
+go 1.26.3
 
 require (
 	github.com/kcp-dev/multicluster-provider v0.7.1
@@ -11,7 +11,7 @@ require (
 	k8s.io/client-go v0.36.1
 	k8s.io/klog/v2 v2.140.0
 	sigs.k8s.io/controller-runtime v0.24.1
-	sigs.k8s.io/multicluster-runtime v0.23.3
+	sigs.k8s.io/multicluster-runtime v0.24.1
 	sigs.k8s.io/yaml v1.6.0
 )
 
