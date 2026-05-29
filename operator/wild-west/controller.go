@@ -68,7 +68,7 @@ func (r *CowboyReconciler) Reconcile(ctx context.Context, req mcreconcile.Reques
 		return reconcile.Result{}, fmt.Errorf("failed to get cowboy: %w", err)
 	}
 
-	log.Info("Reconciling Cowboy", "name", cowboy.Name, "namespace", cowboy.Namespace, "intent", cowboy.Spec.Intent)
+	log.Info("Reconciling Cowboy", "name", cowboy.Name, "intent", cowboy.Spec.Intent)
 
 	// Update status based on intent
 	if cowboy.Spec.Intent != "" && cowboy.Status.Result == "" {
@@ -81,7 +81,7 @@ func (r *CowboyReconciler) Reconcile(ctx context.Context, req mcreconcile.Reques
 
 	// Record an event
 	recorder := cl.GetEventRecorderFor("cowboy-controller")
-	recorder.Eventf(cowboy, corev1.EventTypeNormal, "Reconciled", "Cowboy %s/%s reconciled", cowboy.Namespace, cowboy.Name)
+	recorder.Eventf(cowboy, corev1.EventTypeNormal, "Reconciled", "Cowboy %s reconciled", cowboy.Name)
 
 	return reconcile.Result{}, nil
 }

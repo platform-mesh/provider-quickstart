@@ -36,10 +36,14 @@ type CowboySpec struct {
 	ArmamentRef *ArmamentReference `json:"armamentRef,omitempty"`
 }
 
-// SecretReference references a Secret by name in the same namespace as the Cowboy.
+// SecretReference references a Secret by name and namespace. Cowboys are
+// cluster-scoped so the namespace must be specified explicitly.
 type SecretReference struct {
 	// Name of the referenced Secret
 	Name string `json:"name"`
+
+	// Namespace of the referenced Secret
+	Namespace string `json:"namespace"`
 }
 
 // ArmamentReference references an Armament from the catalog by name.
@@ -56,6 +60,7 @@ type CowboyStatus struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:scope=Cluster
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Intent",type=string,JSONPath=`.spec.intent`
 // +kubebuilder:printcolumn:name="Result",type=string,JSONPath=`.status.result`

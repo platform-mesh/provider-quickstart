@@ -94,11 +94,16 @@ run: fmt vet
 run-armament-sync: fmt vet
 	$(GORUN) ./cmd/armament-sync/main.go --sync-interval=30s
 
-## init: Bootstrap provider resources into workspace (requires KUBECONFIG, optional HOST_OVERRIDE)
+## init: Bootstrap provider resources into the workspace pointed to by KUBECONFIG (optional HOST_OVERRIDE)
 HOST_OVERRIDE ?=
 .PHONY: init
 init: build-init
 	$(BUILD_DIR)/$(INIT_BINARY_NAME) $(if $(HOST_OVERRIDE),--host-override=$(HOST_OVERRIDE))
+
+## init-seed-workspaces: Create the provider workspace hierarchy from the admin kubeconfig, then bootstrap (requires admin KUBECONFIG, optional HOST_OVERRIDE)
+.PHONY: init-seed-workspaces
+init-seed-workspaces: build-init
+	$(BUILD_DIR)/$(INIT_BINARY_NAME) --seed-workspaces $(if $(HOST_OVERRIDE),--host-override=$(HOST_OVERRIDE))
 
 ## generate: Generate code (deepcopy, etc.) and kcp resources
 .PHONY: generate
@@ -210,6 +215,38 @@ portal-stop:
 ## tools: Install all required tools
 .PHONY: tools
 tools: $(CONTROLLER_GEN) $(APIGEN)
+
+# OCM parameters
+OCM ?= ocm
+OCM_REPO ?= ghcr.io/platform-mesh
+OCM_CTF ?= .ocm/transport.ctf
+VERSION ?= 0.0.0-dev
+CHART_VERSION ?= $(VERSION)
+IMAGE_VERSION ?= $(VERSION)
+# OCI registry tag for the referenced images (free-form, e.g. "latest" or "0.1.0").
+# Defaults to "latest" so local builds resolve against an existing tag; CI sets it to the release tag.
+OCI_TAG ?= latest
+
+## ocm-build: Build OCM component archive (CTF) from constructor/component-constructor.yaml
+.PHONY: ocm-build
+ocm-build:
+	mkdir -p $(dir $(OCM_CTF))
+	rm -rf $(OCM_CTF)
+	$(OCM) add components -c --templater=go --file $(OCM_CTF) constructor/component-constructor.yaml -- \
+	  VERSION=$(VERSION) \
+	  CHART_VERSION=$(CHART_VERSION) \
+	  IMAGE_VERSION=$(IMAGE_VERSION) \
+	  OCI_TAG=$(OCI_TAG)
+
+## ocm-push: Transfer the OCM component archive to $(OCM_REPO)
+.PHONY: ocm-push
+ocm-push: ocm-build
+	$(OCM) transfer ctf --overwrite $(OCM_CTF) $(OCM_REPO)
+
+## ocm-describe: Print the locally built component descriptor
+.PHONY: ocm-describe
+ocm-describe: ocm-build
+	$(OCM) get componentversions --repo $(OCM_CTF) -o yaml
 
 ## help: Display this help
 .PHONY: help

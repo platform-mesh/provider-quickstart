@@ -1,7 +1,7 @@
 apiVersion: apis.kcp.io/v1alpha1
 kind: APIResourceSchema
 metadata:
-  name: v260512-977c1bd.cowboys.wildwest.platform-mesh.io
+  name: v260518-8e27e65.cowboys.wildwest.platform-mesh.io
 spec:
   group: wildwest.platform-mesh.io
   names:
@@ -9,7 +9,7 @@ spec:
     listKind: CowboyList
     plural: cowboys
     singular: cowboy
-  scope: Namespaced
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.intent
@@ -60,14 +60,19 @@ spec:
               description: SecretRefs is an array of references to Secrets containing
                 cowboy credentials
               items:
-                description: SecretReference references a Secret by name in the same
-                  namespace as the Cowboy.
+                description: |-
+                  SecretReference references a Secret by name and namespace. Cowboys are
+                  cluster-scoped so the namespace must be specified explicitly.
                 properties:
                   name:
                     description: Name of the referenced Secret
                     type: string
+                  namespace:
+                    description: Namespace of the referenced Secret
+                    type: string
                 required:
                 - name
+                - namespace
                 type: object
               type: array
           type: object

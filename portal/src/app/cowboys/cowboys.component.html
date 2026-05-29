@@ -83,7 +83,6 @@
                 [colorScheme]="getColorScheme(cowboy.metadata.name)"></ui5-avatar>
               <div class="tile-title">
                 <ui5-title level="H6">{{ cowboy.metadata.name }}</ui5-title>
-                <ui5-label class="namespace-label">{{ cowboy.metadata.namespace || 'default' }}</ui5-label>
               </div>
               <ui5-button icon="delete" design="Transparent" tooltip="Delete" (click)="deleteCowboy(cowboy)"></ui5-button>
             </div>
@@ -123,8 +122,8 @@
                 <div class="tile-field tile-field--stack">
                   <ui5-label>Secret Refs</ui5-label>
                   <div class="secret-refs">
-                    @for (ref of cowboy.spec.secretRefs; track ref.name) {
-                      @let status = getSecretStatus(cowboy.metadata.namespace, ref.name);
+                    @for (ref of cowboy.spec.secretRefs; track ref.namespace + '/' + ref.name) {
+                      @let status = getSecretStatus(ref.namespace, ref.name);
                       <span class="secret-chip" [class.exists]="status === 'exists'" [class.missing]="status === 'missing'" [class.loading]="status === 'loading'">
                         @if (status === 'exists') {
                           <ui5-icon name="accept" class="secret-icon"></ui5-icon>
@@ -133,7 +132,7 @@
                         } @else {
                           <ui5-icon name="pending" class="secret-icon"></ui5-icon>
                         }
-                        <span class="secret-name">{{ ref.name }}</span>
+                        <span class="secret-name">{{ ref.namespace }}/{{ ref.name }}</span>
                       </span>
                     }
                   </div>
@@ -158,19 +157,6 @@
   (close)="closeAddDialog()"
 >
   <div class="dialog-content">
-    <div class="form-field">
-      <ui5-label for="cowboy-namespace" required>Namespace</ui5-label>
-      <ui5-select
-        id="cowboy-namespace"
-        (change)="onNamespaceChange($event)"
-      >
-        @for (ns of namespaces(); track ns.metadata.name) {
-          <ui5-option [value]="ns.metadata.name" [selected]="ns.metadata.name === newCowboyNamespace()">
-            {{ ns.metadata.name }}
-          </ui5-option>
-        }
-      </ui5-select>
-    </div>
     <div class="form-field">
       <ui5-label for="cowboy-name" required>Name</ui5-label>
       <ui5-input

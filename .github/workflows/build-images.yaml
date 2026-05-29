@@ -109,3 +109,54 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
+
+  publish-ocm:
+    runs-on: ubuntu-latest
+    needs: [build-controller, build-portal]
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Install OCM CLI
+        run: |
+          VERSION="$(basename "$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/open-component-model/ocm/releases/latest)")"
+          VERSION="${VERSION#v}"
+          curl -LsS -o ocm-cli.tgz \
+            "https://github.com/open-component-model/ocm/releases/download/v${VERSION}/ocm-${VERSION}-linux-amd64.tar.gz"
+          tar -xzf ocm-cli.tgz
+          sudo install -m 0755 ocm /usr/local/bin/ocm
+
+      - name: Configure OCM credentials for GHCR
+        run: |
+          mkdir -p "$HOME"
+          cat > "$HOME/.ocmconfig" <<EOF
+          type: generic.config.ocm.software/v1
+          configurations:
+            - type: credentials.config.ocm.software
+              consumers:
+                - identity:
+                    type: OCIRegistry
+                    scheme: https
+                    hostname: ghcr.io
+                    pathprefix: platform-mesh
+                  credentials:
+                    - type: Credentials
+                      properties:
+                        username: ${{ github.actor }}
+                        password: ${{ secrets.GITHUB_TOKEN }}
+          EOF
+
+      - name: Resolve version from tag
+        id: version
+        run: |
+          REF_NAME="${GITHUB_REF_NAME}"
+          VERSION="${REF_NAME#v}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push OCM component
+        run: |
+          make ocm-push \
+            VERSION=${{ steps.version.outputs.version }} \
+            CHART_VERSION=${{ steps.version.outputs.version }} \
+            IMAGE_VERSION=${{ steps.version.outputs.version }} \
+            OCI_TAG=${{ steps.version.outputs.version }}

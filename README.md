@@ -84,31 +84,39 @@ kind export kubeconfig --name platform-mesh --kubeconfig compute.kubeconfig
 export COMPUTE_KUBECONFIG="$(realpath compute.kubeconfig)"
 ```
 
-### 2. Create Provider Workspace Hierarchy
+### 2. Create Provider Workspace Hierarchy and Bootstrap
 
-Navigate to the root workspace and create the provider workspace structure:
+The init binary can either bootstrap into an already-selected workspace (`make init`)
+or seed the full workspace hierarchy from the admin kubeconfig first
+(`make init-seed-workspaces`). The latter replaces the manual `kubectl ws create`
+steps and lets the same binary run as a Kubernetes initContainer.
+
+Option A — seed everything from root in one step (admin kubeconfig pointed at root):
 
 ```bash
-# Navigate to root workspace and create provider workspace hierarchy
+KUBECONFIG=$PM_KUBECONFIG make init-seed-workspaces HOST_OVERRIDE=https://frontproxy-front-proxy.platform-mesh-system:8443
+```
+
+By default this creates `providers` (type `root:providers`) and `quickstart` (type
+`root:provider`) and bootstraps into the latter. Override with
+`--workspace <name>=<type-path>:<type-name>` (repeatable, parent first) and/or
+`--parent-workspace`.
+
+Option B — drive the workspaces yourself with `kubectl ws`, then bootstrap content only:
+
+```bash
 KUBECONFIG=$PM_KUBECONFIG kubectl ws use :
 KUBECONFIG=$PM_KUBECONFIG kubectl ws create providers --type=root:providers --enter --ignore-existing
 KUBECONFIG=$PM_KUBECONFIG kubectl ws create quickstart --type=root:provider --enter --ignore-existing
-```
-
-### 3. Bootstrap Provider Resources
-
-Build and run the bootstrap to register your provider:
-
-```bash
 KUBECONFIG=$PM_KUBECONFIG make init HOST_OVERRIDE=https://frontproxy-front-proxy.platform-mesh-system:8443
 ```
 
-This applies all kcp and provider resources to register your provider and created dedicated 
-ServiceAccount and RBAC for the provider workspace.
+Either way, this applies all kcp and provider resources to register your provider and
+creates a dedicated ServiceAccount and RBAC for the provider workspace.
 
 Once this is done, you should be able to access your provider's APIs through the kcp API and see it registered in the Platform Mesh UI.
 
-### 4. Extract Operator Kubeconfig
+### 3. Extract Operator Kubeconfig
 
 Extract the kubeconfig for your provider workspace:
 
@@ -116,7 +124,7 @@ Extract the kubeconfig for your provider workspace:
 KUBECONFIG=$PM_KUBECONFIG kubectl get secret wildwest-controller-kubeconfig -n default -o jsonpath='{.data.kubeconfig}' | base64 -d > operator.kubeconfig
 ```
 
-### 5. Run the Operator Locally (optional)
+### 4. Run the Operator Locally (optional)
 
 For local development, run the operator directly:
 
@@ -124,7 +132,7 @@ For local development, run the operator directly:
 KUBECONFIG=./operator.kubeconfig go run ./cmd/wild-west --endpointslice=wildwest.platform-mesh.io
 ```
 
-### 6. Build and Load Images
+### 5. Build and Load Images
 
 Build container images and load them into the kind cluster:
 
@@ -133,7 +141,7 @@ export IMAGE_TAG=platform-mesh
 make images kind-load-all IMAGE_TAG=$IMAGE_TAG
 ```
 
-### 7. Deploy to Cluster
+### 6. Deploy to Cluster
 
 Create the namespace and the kubeconfig secret for the operator:
 
@@ -152,6 +160,26 @@ KUBECONFIG=$COMPUTE_KUBECONFIG helm upgrade --install wildwest-controller ./depl
   --set image.tag=$IMAGE_TAG \
   --set image.pullPolicy=IfNotPresent \
   --set common.defaults.hostAliases.enabled=true
+```
+
+Optionally, enable the bootstrap initContainer to (re)apply provider resources on
+each deploy. It needs its own secret containing an admin kubeconfig (separate from
+the controller kubeconfig) — pointed at the provider workspace, or at root if you
+also want it to seed the workspace hierarchy:
+
+```bash
+KUBECONFIG=$COMPUTE_KUBECONFIG kubectl create secret generic wildwest-init-kubeconfig \
+  --from-file=kubeconfig=$PM_KUBECONFIG -n provider-cowboys
+
+KUBECONFIG=$COMPUTE_KUBECONFIG helm upgrade --install wildwest-controller ./deploy/helm/wildwest-controller \
+  --namespace provider-cowboys \
+  --set image.tag=$IMAGE_TAG \
+  --set image.pullPolicy=IfNotPresent \
+  --set common.defaults.hostAliases.enabled=true \
+  --set init.enabled=true \
+  --set init.kubeconfig.secretName=wildwest-init-kubeconfig \
+  --set init.seedWorkspaces=true \
+  --set init.hostOverride=https://frontproxy-front-proxy.platform-mesh-system:8443
 ```
 
 Deploy the armament-sync controller (runs in the provider workspace and syncs the catalog from an external source — currently a static hardcoded list — into `Armament` CRs that are then exposed read-only to consumer workspaces via a `CachedResource`). It ships as its own image (`provider-quickstart-armament-sync`), built and loaded by `make images kind-load-all`:
@@ -183,9 +211,9 @@ make images kind-load-all IMAGE_TAG=$IMAGE_TAG
 KUBECONFIG=$COMPUTE_KUBECONFIG kubectl rollout restart deployment -n provider-cowboys
 ```
 
-### 8. Try It Out: Cowboys with Secret Refs
+### 7. Try It Out: Cowboys with Secret Refs
 
-The `Cowboy` CRD has an optional `spec.secretRefs[]` field that lists Secrets the cowboy depends on. The portal microfrontend renders one chip per reference and calls the GraphQL gateway to check whether each Secret actually exists:
+`Cowboy` is a **cluster-scoped** CRD with an optional `spec.secretRefs[]` field that lists Secrets the cowboy depends on. Because the cowboy itself has no namespace, each reference carries its own `namespace`. The portal microfrontend renders one chip per reference and calls the GraphQL gateway to check whether each Secret actually exists:
 
 - **Green chip** — Secret resolved (`v1.Secret(name, namespace)` returned metadata).
 - **Red chip** — Secret missing (NotFound) or inaccessible (RBAC forbidden, network error).
@@ -196,7 +224,7 @@ Cowboys without `secretRefs` show no chips row at all, so the existing tiles are
 > **Note:** the snippet below targets a **consumer workspace** that has the `wildwest.platform-mesh.io` APIExport bound — it is **not** the provider workspace from the bootstrap steps above. Today the only supported way to provision and switch into such a workspace is via the **Platform Mesh CLI** (`pm`); plain `kubectl`/`kubectl ws` against the provider workspace will not work because the `Cowboy` API is not served there. Use `pm` to create/select your consumer workspace first, then export its kubeconfig as `KUBECONFIG` and run:
 
 ```bash
-NAMESPACE=default  # change to whatever namespace you're testing in
+NAMESPACE=default  # the namespace where the referenced Secret will live
 
 kubectl apply -f - <<EOF
 apiVersion: v1
@@ -214,18 +242,18 @@ apiVersion: wildwest.platform-mesh.io/v1alpha1
 kind: Cowboy
 metadata:
   name: billy-the-kid
-  namespace: ${NAMESPACE}
 spec:
   intent: Ride the range and protect the cattle
   secretRefs:
-    - name: colt-45-permit       # exists -> green chip
-    - name: missing-saddlebag    # does NOT exist -> red chip
+    - name: colt-45-permit          # exists -> green chip
+      namespace: ${NAMESPACE}
+    - name: missing-saddlebag       # does NOT exist -> red chip
+      namespace: ${NAMESPACE}
 ---
 apiVersion: wildwest.platform-mesh.io/v1alpha1
 kind: Cowboy
 metadata:
   name: lonely-ranger
-  namespace: ${NAMESPACE}
 spec:
   intent: Ride alone
   # no secretRefs -> Secret Refs row is hidden in the UI
@@ -237,11 +265,11 @@ Open the Cowboys page in the Portal and refresh. The `billy-the-kid` tile shows 
 Clean up:
 
 ```bash
-kubectl delete -n "$NAMESPACE" cowboy billy-the-kid lonely-ranger
+kubectl delete cowboy billy-the-kid lonely-ranger
 kubectl delete -n "$NAMESPACE" secret colt-45-permit
 ```
 
-### 9. Try It Out: Armaments Catalog (CachedResource)
+### 8. Try It Out: Armaments Catalog (CachedResource)
 
 `Armament` is a cluster-scoped catalog type populated by the `armament-sync` controller from an external source (currently a static hardcoded list in `pkg/external/static`). The catalog lives in the **provider workspace** and is replicated to consumers read-only via a kcp `CachedResource` bound to the `wildwest.platform-mesh.io` APIExport.
 
@@ -285,7 +313,6 @@ apiVersion: wildwest.platform-mesh.io/v1alpha1
 kind: Cowboy
 metadata:
   name: armed-pete
-  namespace: ${NAMESPACE:-default}
 spec:
   intent: Patrol the canyon
   armamentRef:
@@ -363,7 +390,8 @@ Go types (apis/) → controller-gen → CRDs (config/crds/) → apigen → APIRe
 | `make build-armament-sync` | Build the armament-sync controller binary |
 | `make run` | Run the wild-west operator locally |
 | `make run-armament-sync` | Run the armament-sync controller locally |
-| `make init` | Bootstrap provider resources into workspace (requires KUBECONFIG, optional HOST_OVERRIDE) |
+| `make init` | Bootstrap provider resources into the workspace pointed to by KUBECONFIG (optional HOST_OVERRIDE) |
+| `make init-seed-workspaces` | Create the provider workspace hierarchy from the admin kubeconfig, then bootstrap (optional HOST_OVERRIDE) |
 | `make generate` | Generate code (deepcopy) and kcp resources |
 | `make manifests` | Generate CRD manifests from Go types |
 | `make apiresourceschemas` | Generate APIResourceSchemas from CRDs |
