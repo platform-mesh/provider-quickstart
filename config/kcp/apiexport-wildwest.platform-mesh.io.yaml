@@ -22,7 +22,7 @@ spec:
           name: armaments
   - group: wildwest.platform-mesh.io
     name: cowboys
-    schema: v260512-977c1bd.cowboys.wildwest.platform-mesh.io
+    schema: v260518-8e27e65.cowboys.wildwest.platform-mesh.io
     storage:
       crd: {}
 status: {}

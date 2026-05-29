@@ -66,12 +66,13 @@ The Platform Mesh CRD Gateway exposes your Kubernetes resources via GraphQL. The
 
 ```graphql
 # Query pattern: {apiGroup}_{version}_{Kind}s
+# Cowboy is cluster-scoped, so no namespace field on metadata.
 query ListCowboys {
   wildwest_platform_mesh_io {
     v1alpha1 {
       Cowboys {
         items {
-          metadata { name namespace }
+          metadata { name }
           spec { intent }
           status { result }
         }
@@ -80,11 +81,11 @@ query ListCowboys {
   }
 }
 
-# Mutation pattern: create{Kind}(namespace, object)
-mutation CreateCowboy($name: String!, $namespace: String!) {
+# Mutation pattern (cluster-scoped): create{Kind}(object)
+mutation CreateCowboy($name: String!) {
   wildwest_platform_mesh_io {
     v1alpha1 {
-      createCowboy(namespace: $namespace, object: { metadata: { name: $name } }) {
+      createCowboy(object: { metadata: { name: $name } }) {
         metadata { name }
       }
     }

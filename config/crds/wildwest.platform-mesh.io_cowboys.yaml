@@ -12,7 +12,7 @@ spec:
     listKind: CowboyList
     plural: cowboys
     singular: cowboy
-  scope: Namespaced
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.intent
@@ -64,14 +64,19 @@ spec:
                 description: SecretRefs is an array of references to Secrets containing
                   cowboy credentials
                 items:
-                  description: SecretReference references a Secret by name in the
-                    same namespace as the Cowboy.
+                  description: |-
+                    SecretReference references a Secret by name and namespace. Cowboys are
+                    cluster-scoped so the namespace must be specified explicitly.
                   properties:
                     name:
                       description: Name of the referenced Secret
                       type: string
+                    namespace:
+                      description: Namespace of the referenced Secret
+                      type: string
                   required:
                   - name
+                  - namespace
                   type: object
                 type: array
             type: object

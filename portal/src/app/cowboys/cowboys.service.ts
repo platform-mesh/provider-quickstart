@@ -19,6 +19,7 @@ import { from, map, Observable, of, switchMap, catchError, filter } from 'rxjs';
 
 export interface SecretRef {
   name: string;
+  namespace: string;
 }
 
 export interface ArmamentRef {
@@ -28,7 +29,6 @@ export interface ArmamentRef {
 export interface Cowboy {
   metadata: {
     name: string;
-    namespace?: string;
     creationTimestamp?: string;
   };
   spec: {
@@ -53,12 +53,6 @@ export interface Armament {
   };
 }
 
-export interface Namespace {
-  metadata: {
-    name: string;
-  };
-}
-
 export interface CowboyListResponse {
   wildwest_platform_mesh_io: {
     v1alpha1: {
@@ -79,14 +73,6 @@ export interface ArmamentListResponse {
   };
 }
 
-export interface NamespaceListResponse {
-  v1: {
-    Namespaces: {
-      items: Namespace[];
-    };
-  };
-}
-
 const LIST_COWBOYS_QUERY = `
   query ListCowboys {
     wildwest_platform_mesh_io {
@@ -95,13 +81,13 @@ const LIST_COWBOYS_QUERY = `
           items {
             metadata {
               name
-              namespace
               creationTimestamp
             }
             spec {
               intent
               secretRefs {
                 name
+                namespace
               }
               armamentRef {
                 name
@@ -151,20 +137,6 @@ const GET_SECRET_QUERY = `
   }
 `;
 
-const LIST_NAMESPACES_QUERY = `
-  query ListNamespaces {
-    v1 {
-      Namespaces {
-        items {
-          metadata {
-            name
-          }
-        }
-      }
-    }
-  }
-`;
-
 /**
  * Build a createCowboy mutation. The `armamentRef` input is omitted entirely
  * when no armament was picked, rather than passing `null`, because the CRD
@@ -175,11 +147,10 @@ function buildCreateCowboyMutation(includeArmament: boolean): string {
   const armamentClause = includeArmament ? ', armamentRef: { name: $armamentName }' : '';
   const armamentVar = includeArmament ? ', $armamentName: String!' : '';
   return `
-    mutation CreateCowboy($name: String!, $namespace: String!, $intent: String${armamentVar}) {
+    mutation CreateCowboy($name: String!, $intent: String${armamentVar}) {
       wildwest_platform_mesh_io {
         v1alpha1 {
           createCowboy(
-            namespace: $namespace
             object: {
               metadata: { name: $name }
               spec: { intent: $intent${armamentClause} }
@@ -187,7 +158,6 @@ function buildCreateCowboyMutation(includeArmament: boolean): string {
           ) {
             metadata {
               name
-              namespace
             }
           }
         }
@@ -197,10 +167,10 @@ function buildCreateCowboyMutation(includeArmament: boolean): string {
 }
 
 const DELETE_COWBOY_MUTATION = `
-  mutation DeleteCowboy($name: String!, $namespace: String!) {
+  mutation DeleteCowboy($name: String!) {
     wildwest_platform_mesh_io {
       v1alpha1 {
-        deleteCowboy(name: $name, namespace: $namespace)
+        deleteCowboy(name: $name)
       }
     }
   }
@@ -292,44 +262,16 @@ export class CowboysService {
   }
 
   /**
-   * List all Namespaces available to the user.
-   * Core K8s resources use pattern: v1.{Kind}s
-   */
-  listNamespaces(): Observable<Namespace[]> {
-    return this.getGraphQLConfig().pipe(
-      switchMap(({ endpoint, token }) =>
-        from(
-          fetch(endpoint, {
-            method: 'POST',
-            headers: this.buildHeaders(token),
-            body: JSON.stringify({
-              query: LIST_NAMESPACES_QUERY,
-            }),
-          }).then((res) => res.json())
-        )
-      ),
-      map((response: { data: NamespaceListResponse }) => {
-        return response.data?.v1?.Namespaces?.items || [];
-      }),
-      catchError((error) => {
-        console.error('Error fetching namespaces:', error);
-        return of([]);
-      })
-    );
-  }
-
-  /**
-   * Create a new Cowboy resource in the specified namespace.
-   * Uses GraphQL mutation pattern: create{Kind}(namespace, object)
+   * Create a new (cluster-scoped) Cowboy resource.
+   * Uses GraphQL mutation pattern: create{Kind}(object)
    */
   createCowboy(
     name: string,
-    namespace: string,
     intent?: string,
     armamentName?: string,
   ): Observable<boolean> {
     const includeArmament = !!armamentName;
-    const variables: Record<string, unknown> = { name, namespace, intent };
+    const variables: Record<string, unknown> = { name, intent };
     if (includeArmament) {
       variables['armamentName'] = armamentName;
     }
@@ -408,10 +350,10 @@ export class CowboysService {
   }
 
   /**
-   * Delete a Cowboy resource by name.
+   * Delete a (cluster-scoped) Cowboy resource by name.
    * Uses GraphQL mutation pattern: delete{Kind}(name)
    */
-  deleteCowboy(name: string, namespace: string): Observable<boolean> {
+  deleteCowboy(name: string): Observable<boolean> {
     return this.getGraphQLConfig().pipe(
       switchMap(({ endpoint, token }) =>
         from(
@@ -420,7 +362,7 @@ export class CowboysService {
             headers: this.buildHeaders(token),
             body: JSON.stringify({
               query: DELETE_COWBOY_MUTATION,
-              variables: { name, namespace },
+              variables: { name },
             }),
           }).then((res) => res.json())
         )

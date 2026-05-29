@@ -51,3 +51,23 @@ controller:
 kubeconfig:
   secretName: "wildwest-controller-kubeconfig"
   secretKey: "kubeconfig"
+
+# Optional init container that runs the bootstrap binary before the controller
+# starts. Expects a separate secret holding an admin kubeconfig pointed at the
+# provider workspace (or at the parent workspace if seedWorkspaces is true).
+init:
+  enabled: false
+  kubeconfig:
+    secretName: ""
+    secretKey: "kubeconfig"
+  # Override the server URL written into the controller kubeconfig the init
+  # binary generates (e.g. https://frontproxy-front-proxy.platform-mesh-system:6443).
+  hostOverride: ""
+  # When true the init binary also creates the workspace hierarchy from
+  # workspaces[] under parentWorkspace before bootstrapping content.
+  seedWorkspaces: false
+  parentWorkspace: "root"
+  workspaces:
+    - "providers=root:providers"
+    - "quickstart=root:provider"
+  resources: {}

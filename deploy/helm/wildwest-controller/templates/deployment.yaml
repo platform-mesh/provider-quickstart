@@ -29,6 +29,35 @@ spec:
 {{ include "common.hostAliases" $ | nindent 6 }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if .Values.init.enabled }}
+      initContainers:
+        - name: bootstrap
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ include "wildwest-controller.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/wild-west-init"]
+          args:
+            {{- if .Values.init.seedWorkspaces }}
+            - --seed-workspaces
+            - --parent-workspace={{ .Values.init.parentWorkspace }}
+            {{- range .Values.init.workspaces }}
+            - --workspace={{ . }}
+            {{- end }}
+            {{- end }}
+            {{- with .Values.init.hostOverride }}
+            - --host-override={{ . }}
+            {{- end }}
+          env:
+            - name: KUBECONFIG
+              value: /etc/kcp-init/kubeconfig
+          volumeMounts:
+            - name: init-kubeconfig
+              mountPath: /etc/kcp-init
+              readOnly: true
+          resources:
+            {{- toYaml .Values.init.resources | nindent 12 }}
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -72,6 +101,14 @@ spec:
             items:
               - key: {{ .Values.kubeconfig.secretKey }}
                 path: kubeconfig
+        {{- if .Values.init.enabled }}
+        - name: init-kubeconfig
+          secret:
+            secretName: {{ required "init.kubeconfig.secretName is required when init.enabled is true" .Values.init.kubeconfig.secretName }}
+            items:
+              - key: {{ .Values.init.kubeconfig.secretKey }}
+                path: kubeconfig
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

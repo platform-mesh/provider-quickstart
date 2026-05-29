@@ -45,7 +45,7 @@ import '@ui5/webcomponents-icons/dist/pending.js';
 import '@ui5/webcomponents-icons/dist/person-placeholder.js';
 import '@ui5/webcomponents-icons/dist/refresh.js';
 
-import { Armament, Cowboy, CowboysService, Namespace } from './cowboys.service';
+import { Armament, Cowboy, CowboysService } from './cowboys.service';
 
 @Component({
   selector: 'app-cowboys',
@@ -80,12 +80,10 @@ export class CowboysComponent {
   });
 
   public cowboys = signal<Cowboy[]>([]);
-  public namespaces = signal<Namespace[]>([]);
   public armaments = signal<Armament[]>([]);
   public loading = signal<boolean>(true);
   public showAddDialog = signal<boolean>(false);
   public newCowboyName = signal<string>('');
-  public newCowboyNamespace = signal<string>('');
   public newCowboyIntent = signal<string>('');
   // Empty string means "no armament" — the create dialog leaves this unset
   // by default, and the mutation skips the armamentRef field entirely.
@@ -116,7 +114,6 @@ export class CowboysComponent {
     LuigiClient.addInitListener(() => {
       // Show Luigi's loading indicator while fetching data
       LuigiClient.uxManager().showLoadingIndicator();
-      this.loadNamespaces();
       this.loadArmaments();
       this.loadCowboys();
     });
@@ -126,21 +123,6 @@ export class CowboysComponent {
     this.cowboysService.listArmaments().subscribe({
       next: (armaments) => this.armaments.set(armaments),
       error: (err) => console.error('Failed to load armaments:', err),
-    });
-  }
-
-  public loadNamespaces(): void {
-    this.cowboysService.listNamespaces().subscribe({
-      next: (namespaces) => {
-        this.namespaces.set(namespaces);
-        // Pre-select first namespace if available
-        if (namespaces.length > 0 && !this.newCowboyNamespace()) {
-          this.newCowboyNamespace.set(namespaces[0].metadata.name);
-        }
-      },
-      error: (err) => {
-        console.error('Failed to load namespaces:', err);
-      },
     });
   }
 
@@ -170,10 +152,6 @@ export class CowboysComponent {
     this.newCowboyName.set('');
     this.newCowboyIntent.set('');
     this.newCowboyArmament.set('');
-    // Pre-select first namespace if available
-    if (this.namespaces().length > 0) {
-      this.newCowboyNamespace.set(this.namespaces()[0].metadata.name);
-    }
     this.showAddDialog.set(true);
   }
 
@@ -191,11 +169,6 @@ export class CowboysComponent {
     this.newCowboyIntent.set(input.value);
   }
 
-  public onNamespaceChange(event: Event): void {
-    const select = event.target as any;
-    this.newCowboyNamespace.set(select.selectedOption?.value || '');
-  }
-
   public onArmamentChange(event: Event): void {
     const select = event.target as any;
     this.newCowboyArmament.set(select.selectedOption?.value || '');
@@ -203,7 +176,6 @@ export class CowboysComponent {
 
   public confirmAddCowboy(): void {
     const name = this.newCowboyName().trim();
-    const namespace = this.newCowboyNamespace().trim();
     const intent = this.newCowboyIntent().trim();
 
     if (!name) {
@@ -215,17 +187,8 @@ export class CowboysComponent {
       return;
     }
 
-    if (!namespace) {
-      LuigiClient.uxManager().showAlert({
-        text: 'Please select a namespace',
-        type: 'warning',
-        closeAfter: 3000,
-      });
-      return;
-    }
-
     const armament = this.newCowboyArmament().trim();
-    this.cowboysService.createCowboy(name, namespace, intent || undefined, armament || undefined).subscribe({
+    this.cowboysService.createCowboy(name, intent || undefined, armament || undefined).subscribe({
       next: (success) => {
         if (success) {
           LuigiClient.uxManager().showAlert({
@@ -263,7 +226,7 @@ export class CowboysComponent {
         buttonDismiss: 'Cancel',
       })
       .then(() => {
-        this.cowboysService.deleteCowboy(cowboy.metadata.name, cowboy.metadata.namespace!).subscribe({
+        this.cowboysService.deleteCowboy(cowboy.metadata.name).subscribe({
           next: (success) => {
             if (success) {
               LuigiClient.uxManager().showAlert({
@@ -294,11 +257,11 @@ export class CowboysComponent {
       });
   }
 
-  public secretKey(namespace: string | undefined, name: string): string {
-    return `${namespace ?? ''}/${name}`;
+  public secretKey(namespace: string, name: string): string {
+    return `${namespace}/${name}`;
   }
 
-  public getSecretStatus(namespace: string | undefined, name: string): 'loading' | 'exists' | 'missing' {
+  public getSecretStatus(namespace: string, name: string): 'loading' | 'exists' | 'missing' {
     return this.secretStatuses()[this.secretKey(namespace, name)] ?? 'loading';
   }
 
@@ -309,10 +272,8 @@ export class CowboysComponent {
   private refreshSecretStatuses(cowboys: Cowboy[]): void {
     const refs = new Map<string, { name: string; namespace: string }>();
     for (const c of cowboys) {
-      const namespace = c.metadata.namespace;
-      if (!namespace) continue;
       for (const ref of c.spec.secretRefs ?? []) {
-        refs.set(this.secretKey(namespace, ref.name), { name: ref.name, namespace });
+        refs.set(this.secretKey(ref.namespace, ref.name), { name: ref.name, namespace: ref.namespace });
       }
     }
 

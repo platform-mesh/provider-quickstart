@@ -1,4 +1,5 @@
 bin/**
+.ocm/
 .claude
 hack/tools/**
 *.kubeconfig
