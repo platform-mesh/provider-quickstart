@@ -4,7 +4,7 @@ go 1.26.3
 
 require (
 	github.com/kcp-dev/multicluster-provider v0.7.1-0.20260518112010-9eefa0f96ce0
-	github.com/kcp-dev/sdk v0.31.1
+	github.com/kcp-dev/sdk v0.31.2
 	github.com/spf13/pflag v1.0.10
 	k8s.io/api v0.36.1
 	k8s.io/apimachinery v0.36.1
