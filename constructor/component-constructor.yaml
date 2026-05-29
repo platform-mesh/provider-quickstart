@@ -3,6 +3,17 @@ components:
     version: {{ .VERSION }}
     provider:
       name: platform-mesh
+    labels:
+      - name: org.opencontainers.image.source
+        value: https://github.com/platform-mesh/provider-quickstart
+    sources:
+      - name: source
+        type: git
+        version: {{ .VERSION }}
+        access:
+          type: gitHub
+          repoUrl: https://github.com/platform-mesh/provider-quickstart
+          ref: refs/heads/main
     resources:
       - name: controller-chart
         type: helmChart
