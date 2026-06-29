@@ -219,6 +219,8 @@ tools: $(CONTROLLER_GEN) $(APIGEN)
 # OCM parameters
 OCM ?= ocm
 OCM_REPO ?= ghcr.io/platform-mesh
+# Component name as declared in constructor/component-constructor.yaml.
+OCM_COMPONENT ?= github.com/platform-mesh/provider-quickstart
 OCM_CTF ?= .ocm/transport.ctf
 VERSION ?= 0.0.0-dev
 CHART_VERSION ?= $(VERSION)
@@ -257,6 +259,11 @@ ocm-push: ocm-build
 .PHONY: ocm-describe
 ocm-describe: ocm-build
 	$(OCM) get componentversions --repo $(OCM_CTF) -o yaml
+
+## ocm-get: Inspect the PUBLISHED component in $(OCM_REPO) (pass VERSION=<tag>)
+.PHONY: ocm-get
+ocm-get:
+	$(OCM) get cv $(OCM_REPO)//$(OCM_COMPONENT):$(VERSION) -o yaml
 
 ## helm-push: Package and push deployable Helm charts to $(HELM_REPO) as OCI artifacts
 .PHONY: helm-push
