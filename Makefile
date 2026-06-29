@@ -223,6 +223,16 @@ OCM_CTF ?= .ocm/transport.ctf
 VERSION ?= 0.0.0-dev
 CHART_VERSION ?= $(VERSION)
 IMAGE_VERSION ?= $(VERSION)
+
+# Helm chart publishing parameters
+HELM ?= helm
+# Charts are published under this repo's own GHCR namespace (self-contained,
+# alongside the container images) rather than the shared helm-charts registry.
+HELM_REPO ?= ghcr.io/platform-mesh/provider-quickstart/charts
+# Deployable charts published as standalone OCI Helm artifacts. These are consumed
+# by the platform-mesh-operator ManagedProvider machinery (Flux OCIRepository ->
+# HelmRelease); see config/pm/README.md.
+HELM_CHARTS ?= wildwest-controller wildwest-portal wildwest-armament-sync
 # OCI registry tag for the referenced images (free-form, e.g. "latest" or "0.1.0").
 # Defaults to "latest" so local builds resolve against an existing tag; CI sets it to the release tag.
 OCI_TAG ?= latest
@@ -247,6 +257,21 @@ ocm-push: ocm-build
 .PHONY: ocm-describe
 ocm-describe: ocm-build
 	$(OCM) get componentversions --repo $(OCM_CTF) -o yaml
+
+## helm-push: Package and push deployable Helm charts to $(HELM_REPO) as OCI artifacts
+.PHONY: helm-push
+helm-push:
+	mkdir -p $(BUILD_DIR)/charts
+	@for chart in $(HELM_CHARTS); do \
+	  echo "==> packaging $$chart $(CHART_VERSION)"; \
+	  $(HELM) dependency build deploy/helm/$$chart || exit 1; \
+	  $(HELM) package deploy/helm/$$chart \
+	    --version $(CHART_VERSION) \
+	    --app-version $(IMAGE_VERSION) \
+	    --destination $(BUILD_DIR)/charts || exit 1; \
+	  echo "==> pushing $$chart-$(CHART_VERSION).tgz to oci://$(HELM_REPO)"; \
+	  $(HELM) push $(BUILD_DIR)/charts/$$chart-$(CHART_VERSION).tgz oci://$(HELM_REPO) || exit 1; \
+	done
 
 ## help: Display this help
 .PHONY: help

@@ -1,0 +1,93 @@
+# ManagedProvider drives the platform-mesh-operator to bootstrap the quickstart
+# ("Wild West") provider end-to-end:
+#
+#   1. WaitPlatformMesh   - waits for the referenced PlatformMesh to be Ready.
+#   2. ProviderResource   - creates a Provider in kcp (default: root:providers:system),
+#                           which provisions a dedicated provider workspace + a scoped
+#                           admin kubeconfig Secret inside that workspace.
+#   3. WaitProvider       - waits for the Provider to reach phase=Ready.
+#   4. KubeconfigCopy     - copies that kubeconfig into this runtime namespace as
+#                           Secret "<name>-provider-kubeconfig" (key: kubeconfig).
+#   5. Deploy             - for every runtimeDeployments[].ocm entry it creates a Flux
+#                           OCIRepository (oci://<registry>/<componentName>:<version>,
+#                           helm-chart layer) + a HelmRelease that installs the chart
+#                           into this namespace.
+#
+# The wildwest-controller chart consumes the copied provider kubeconfig: its init
+# container (init.enabled=true) bootstraps the provider workspace content (Cowboys
+# APIResourceSchema/APIExport, Armaments CRD, ProviderMetadata, content config) and
+# the main container then reconciles Cowboys against that workspace.
+apiVersion: providers.platform-mesh.io/v1alpha1
+kind: ManagedProvider
+metadata:
+  name: wildwest
+  namespace: platform-mesh-system
+spec:
+  # The PlatformMesh this provider is onboarded onto. Must exist and be Ready.
+  platformMeshRef:
+    name: platform-mesh
+
+  # Remove the kcp provider workspace when this ManagedProvider is deleted.
+  cleanupOnDelete: false
+
+  # Components installed into the runtime cluster. Each entry points Flux at an
+  # OCI Helm chart artifact: oci://<registry>/<componentName>:<version>.
+  runtimeDeployments:
+    # ---- Wild West controller -------------------------------------------------
+    - ocm:
+        componentName: wildwest-controller
+        registry: ghcr.io/platform-mesh/provider-quickstart/charts
+        version: "0.0.6"
+        values:
+          # Provider-workspace kubeconfig copied in by the operator
+          # (defaults to <ManagedProvider.name>-provider-kubeconfig / key "kubeconfig").
+          kubeconfig:
+            secretName: wildwest-provider-kubeconfig
+            secretKey: kubeconfig
+          controller:
+            endpointSlice: wildwest.platform-mesh.io
+          # Bootstrap the provider workspace content before the controller starts.
+          # The Provider machinery creates an EMPTY workspace; this init container
+          # installs the Cowboys APIExport/schema, Armaments CRD and ProviderMetadata.
+          init:
+            enabled: true
+            kubeconfig:
+              secretName: wildwest-provider-kubeconfig
+              secretKey: kubeconfig
+            # We bootstrap into the existing provider workspace, so do NOT seed the
+            # workspace hierarchy.
+            seedWorkspaces: false
+            # If the copied kubeconfig needs a different front-proxy host than the one
+            # baked in, set providerHostOverride on this spec (preferred) or:
+            # hostOverride: https://frontproxy-front-proxy.platform-mesh-system:8443
+
+    # ---- Wild West portal (Angular UI) ---------------------------------------
+    - ocm:
+        componentName: wildwest-portal
+        registry: ghcr.io/platform-mesh/provider-quickstart/charts
+        version: "0.0.6"
+        # Portal needs no kubeconfig. Enable httpRoute/middleware here if your
+        # runtime exposes a Gateway (see deploy/helm/wildwest-portal/values.yaml).
+        # values:
+        #   httpRoute:
+        #     enabled: true
+        #   middleware:
+        #     enabled: true
+
+  # ---- Optional overrides -----------------------------------------------------
+  # Override the kcp front-proxy host written into the generated kubeconfig:
+  # providerHostOverride: https://frontproxy-front-proxy.platform-mesh-system:8443
+  #
+  # Store the copied kubeconfig under a custom Secret name/key (default shown):
+  # providerKubeconfigSecret:
+  #   name: wildwest-provider-kubeconfig
+  #   key: kubeconfig
+  #
+  # Deploy the Helm charts into a different runtime cluster (Secret with key
+  # "kubeconfig" in this namespace); omit to use the hosting cluster:
+  # runtimeKubeconfigSecretName: platform-runtime-kubeconfig
+  #
+  # Create/adopt the Provider in a specific workspace instead of root:providers:system:
+  # provider:
+  #   path: root:orgs:org-a:demo-acc
+  #   name: wildwest
