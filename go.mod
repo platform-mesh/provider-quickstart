@@ -3,8 +3,8 @@ module github.com/platform-mesh/provider-quickstart
 go 1.26.3
 
 require (
-	github.com/kcp-dev/multicluster-provider v0.7.1-0.20260518112010-9eefa0f96ce0
-	github.com/kcp-dev/sdk v0.31.2
+	github.com/kcp-dev/multicluster-provider v0.8.0
+	github.com/kcp-dev/sdk v0.32.0
 	github.com/spf13/pflag v1.0.10
 	k8s.io/api v0.36.1
 	k8s.io/apimachinery v0.36.1
@@ -43,7 +43,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/kcp-dev/apimachinery/v2 v2.31.3-0.20260528111109-3fda4dbfbbc9 // indirect
+	github.com/kcp-dev/apimachinery/v2 v2.32.0 // indirect
 	github.com/kcp-dev/logicalcluster/v3 v3.0.5 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
@@ -53,7 +53,7 @@ require (
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.67.5 // indirect
-	github.com/prometheus/procfs v0.19.2 // indirect
+	github.com/prometheus/procfs v0.20.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.1 // indirect
