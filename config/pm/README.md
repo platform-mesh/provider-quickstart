@@ -60,6 +60,25 @@ Published artifacts the manifest references:
 > time.) If you publish elsewhere, update `registry` / `componentName` / `version` in
 > [`managedprovider.yaml`](./managedprovider.yaml) accordingly.
 
+## Configure the front-proxy IP (required)
+
+kcp advertises the provider's APIExport virtual-workspace endpoint as
+`https://root.kcp.localhost:8443/...`. Inside the controller pod that hostname
+resolves to `127.0.0.1`, so the controller's endpoint watcher fails with
+`dial tcp 127.0.0.1:8443: connect: connection refused`. To fix this the chart
+pins those hostnames to the front-proxy service ClusterIP via `hostAliases`.
+
+This is the **one value you must set for your cluster**. Find the IP:
+
+```bash
+kubectl -n platform-mesh-system get svc frontproxy-front-proxy \
+  -o jsonpath='{.spec.clusterIP}'
+```
+
+and set it in [`kustomization.yaml`](./kustomization.yaml) (the `patches:` entry,
+`value:`). The IP is stable for the lifetime of the service; update it if the
+front-proxy Service is recreated.
+
 ## Apply
 
 ```bash

@@ -60,19 +60,42 @@ spec:
             # If the copied kubeconfig needs a different front-proxy host than the one
             # baked in, set providerHostOverride on this spec (preferred) or:
             # hostOverride: https://frontproxy-front-proxy.platform-mesh-system:8443
+          # kcp advertises the APIExport virtual-workspace endpoint as
+          # https://root.kcp.localhost:8443/... which resolves to 127.0.0.1 inside the
+          # pod. Pin those hostnames to the in-cluster front-proxy service IP so the
+          # controller can reach the virtual workspace. The IP is environment-specific
+          # and is set via the kustomize patch in kustomization.yaml.
+          hostAliases:
+            enabled: true
+            entries:
+              - ip: "127.0.0.1" # PLACEHOLDER - overridden by kustomization.yaml patch
+                hostnames:
+                  - root.kcp.localhost
+                  - kcp.localhost
+                  - localhost
 
     # ---- Wild West portal (Angular UI) ---------------------------------------
     - ocm:
         componentName: wildwest-portal
         registry: ghcr.io/platform-mesh/provider-quickstart/charts
         version: "0.0.7"
-        # Portal needs no kubeconfig. Enable httpRoute/middleware here if your
-        # runtime exposes a Gateway (see deploy/helm/wildwest-portal/values.yaml).
-        # values:
-        #   httpRoute:
-        #     enabled: true
-        #   middleware:
-        #     enabled: true
+        # Portal needs no kubeconfig. Expose it through the platform Gateway.
+        # These values are passed verbatim into the HelmRelease; the chart defaults
+        # already match the platform-mesh-system Gateway / CORS setup, so enabling the
+        # toggles is enough (override hostnames/parentRefs/corsOrigins below if needed).
+        # NOTE: under ManagedProvider the chart installs into this ManagedProvider's
+        # namespace (platform-mesh-system), so the HTTPRoute backendRef Service and the
+        # route/middleware all live in platform-mesh-system.
+        values:
+          httpRoute:
+            enabled: true
+          middleware:
+            enabled: true
+          # If the portal pod needs hostAliases (as in the manual install), add:
+          # common:
+          #   defaults:
+          #     hostAliases:
+          #       enabled: true
 
   # ---- Optional overrides -----------------------------------------------------
   # Override the kcp front-proxy host written into the generated kubeconfig:
