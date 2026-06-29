@@ -37,7 +37,7 @@ spec:
     - ocm:
         componentName: wildwest-controller
         registry: ghcr.io/platform-mesh/provider-quickstart/charts
-        version: "0.0.6"
+        version: "0.0.7"
         values:
           # Provider-workspace kubeconfig copied in by the operator
           # (defaults to <ManagedProvider.name>-provider-kubeconfig / key "kubeconfig").
@@ -65,7 +65,7 @@ spec:
     - ocm:
         componentName: wildwest-portal
         registry: ghcr.io/platform-mesh/provider-quickstart/charts
-        version: "0.0.6"
+        version: "0.0.7"
         # Portal needs no kubeconfig. Enable httpRoute/middleware here if your
         # runtime exposes a Gateway (see deploy/helm/wildwest-portal/values.yaml).
         # values:

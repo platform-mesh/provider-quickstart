@@ -43,9 +43,9 @@ On the **runtime cluster**:
 
 Published artifacts the manifest references:
 
-- OCI **Helm charts** at (version tracks the release tag — latest is `v0.0.6`):
-  - `oci://ghcr.io/platform-mesh/provider-quickstart/charts/wildwest-controller:0.0.6`
-  - `oci://ghcr.io/platform-mesh/provider-quickstart/charts/wildwest-portal:0.0.6`
+- OCI **Helm charts** at (version tracks the release tag — latest is `v0.0.7`):
+  - `oci://ghcr.io/platform-mesh/provider-quickstart/charts/wildwest-controller:0.0.7`
+  - `oci://ghcr.io/platform-mesh/provider-quickstart/charts/wildwest-portal:0.0.7`
 - The chart `values.image.tag` digests resolve from `ghcr.io/platform-mesh/provider-quickstart*`.
 
 > **Publishing note.** The operator's `Deploy` subroutine consumes **plain OCI Helm
@@ -56,7 +56,7 @@ Published artifacts the manifest references:
 > the `publish-helm` job in [`build-images.yaml`](../../.github/workflows/build-images.yaml)
 > on every `v*` tag (via `make helm-push`). CI versions all release artifacts from the git
 > tag (`VERSION = ${tag#v}`), so the chart version equals the release tag — latest is
-> `v0.0.6`. (The internal `deploy/helm/*/Chart.yaml` version is overridden at publish
+> `v0.0.7`. (The internal `deploy/helm/*/Chart.yaml` version is overridden at publish
 > time.) If you publish elsewhere, update `registry` / `componentName` / `version` in
 > [`managedprovider.yaml`](./managedprovider.yaml) accordingly.
 
