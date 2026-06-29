@@ -239,6 +239,19 @@ HELM_CHARTS ?= wildwest-controller wildwest-portal wildwest-armament-sync
 # Defaults to "latest" so local builds resolve against an existing tag; CI sets it to the release tag.
 OCI_TAG ?= latest
 
+## chart-stamp: Write CHART_VERSION/IMAGE_VERSION into each chart's Chart.yaml (CI release step)
+# OCM's `input: {type: helm}` reads the chart version straight from Chart.yaml, so the
+# release tag must be stamped in before `ocm-build`. With image.tag empty the chart also
+# pulls its image at appVersion, keeping chart tag == image tag == release version.
+.PHONY: chart-stamp
+chart-stamp:
+	@for chart in $(HELM_CHARTS); do \
+	  echo "==> stamping deploy/helm/$$chart/Chart.yaml version=$(CHART_VERSION) appVersion=$(IMAGE_VERSION)"; \
+	  sed -i.bak -E "s/^version:.*/version: $(CHART_VERSION)/" deploy/helm/$$chart/Chart.yaml; \
+	  sed -i.bak -E "s/^appVersion:.*/appVersion: \"$(IMAGE_VERSION)\"/" deploy/helm/$$chart/Chart.yaml; \
+	  rm -f deploy/helm/$$chart/Chart.yaml.bak; \
+	done
+
 ## ocm-build: Build OCM component archive (CTF) from constructor/component-constructor.yaml
 .PHONY: ocm-build
 ocm-build:

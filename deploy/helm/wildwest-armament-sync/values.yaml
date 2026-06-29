@@ -3,9 +3,8 @@ replicaCount: 1
 image:
   repository: ghcr.io/platform-mesh/provider-quickstart-armament-sync
   pullPolicy: IfNotPresent
-  # Empty -> falls back to the chart appVersion. CI packages the chart with
-  # --app-version=<release tag> (matching the image tag pushed by the
-  # build-armament-sync job), so the published chart pulls the matching image.
+  # Empty -> falls back to the chart appVersion. CI stamps appVersion to the release
+  # tag (see `make chart-stamp`), so the released chart pulls the matching image tag.
   tag: ""
 
 imagePullSecrets: []

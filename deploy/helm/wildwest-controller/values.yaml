@@ -3,7 +3,9 @@ replicaCount: 1
 image:
   repository: ghcr.io/platform-mesh/provider-quickstart
   pullPolicy: IfNotPresent
-  tag: "@sha256:ee2b38054919b66bdc52d89d6ea94fe58f25e2937368a57e1d6421b7bc49cfcb"
+  # Empty -> falls back to the chart appVersion. CI stamps appVersion to the release
+  # tag (see `make chart-stamp`), so the released chart pulls the matching image tag.
+  tag: ""
 
 imagePullSecrets: []
 nameOverride: ""

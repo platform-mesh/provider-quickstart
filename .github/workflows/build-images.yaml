@@ -206,6 +206,12 @@ jobs:
           VERSION="${REF_NAME#v}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
+      - name: Stamp chart versions
+        run: |
+          make chart-stamp \
+            CHART_VERSION=${{ steps.version.outputs.version }} \
+            IMAGE_VERSION=${{ steps.version.outputs.version }}
+
       - name: Build and push OCM component
         run: |
           make ocm-push \
