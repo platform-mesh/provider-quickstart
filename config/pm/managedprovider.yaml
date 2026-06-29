@@ -8,8 +8,8 @@
 #   3. WaitProvider       - waits for the Provider to reach phase=Ready.
 #   4. KubeconfigCopy     - copies that kubeconfig into this runtime namespace as
 #                           Secret "<name>-provider-kubeconfig" (key: kubeconfig).
-#   5. Deploy             - for every runtimeDeployments[].ocm entry it creates a Flux
-#                           OCIRepository (oci://<registry>/<componentName>:<version>,
+#   5. Deploy             - for every runtimeDeployments[].flux entry it creates a Flux
+#                           OCIRepository (oci://<registry>/<chart>:<version>,
 #                           helm-chart layer) + a HelmRelease that installs the chart
 #                           into this namespace.
 #
@@ -31,13 +31,13 @@ spec:
   cleanupOnDelete: false
 
   # Components installed into the runtime cluster. Each entry points Flux at an
-  # OCI Helm chart artifact: oci://<registry>/<componentName>:<version>.
+  # OCI Helm chart artifact: oci://<registry>/<chart>:<version>.
   runtimeDeployments:
     # ---- Wild West controller -------------------------------------------------
-    - ocm:
-        componentName: wildwest-controller
+    - flux:
+        chart: wildwest-controller
         registry: ghcr.io/platform-mesh/provider-quickstart/charts
-        version: "0.0.7"
+        version: "0.0.8"
         values:
           # Provider-workspace kubeconfig copied in by the operator
           # (defaults to <ManagedProvider.name>-provider-kubeconfig / key "kubeconfig").
@@ -75,10 +75,10 @@ spec:
                   - localhost
 
     # ---- Wild West portal (Angular UI) ---------------------------------------
-    - ocm:
-        componentName: wildwest-portal
+    - flux:
+        chart: wildwest-portal
         registry: ghcr.io/platform-mesh/provider-quickstart/charts
-        version: "0.0.7"
+        version: "0.0.8"
         # Portal needs no kubeconfig. Expose it through the platform Gateway.
         # These values are passed verbatim into the HelmRelease; the chart defaults
         # already match the platform-mesh-system Gateway / CORS setup, so enabling the
@@ -102,10 +102,10 @@ spec:
     # Armament CRs. Connects to kcp via the provider workspace kubeconfig
     # (KUBECONFIG=/etc/kcp/kubeconfig), so it needs the same kubeconfig + hostAliases
     # wiring as the controller.
-    - ocm:
-        componentName: wildwest-armament-sync
+    - flux:
+        chart: wildwest-armament-sync
         registry: ghcr.io/platform-mesh/provider-quickstart/charts
-        version: "0.0.7"
+        version: "0.0.8"
         values:
           # Chart default is wildwest-controller-kubeconfig; under ManagedProvider the
           # operator copies the provider kubeconfig as wildwest-provider-kubeconfig.

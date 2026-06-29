@@ -20,7 +20,7 @@ subroutines:
 | 2 | `ProviderResource`| Creates a kcp `Provider` (default path `root:providers:system`). The Provider controller provisions a dedicated provider **workspace** + a scoped admin kubeconfig `Secret`. |
 | 3 | `WaitProvider`    | Waits for the `Provider` to reach `phase=Ready`. |
 | 4 | `KubeconfigCopy`  | Copies that kubeconfig into the runtime namespace as `Secret/wildwest-provider-kubeconfig` (key `kubeconfig`). |
-| 5 | `Deploy`          | For each `runtimeDeployments[].ocm` entry, creates a Flux `OCIRepository` (`oci://<registry>/<componentName>:<version>`, helm-chart layer) + a `HelmRelease` that installs the chart into the runtime namespace. |
+| 5 | `Deploy`          | For each `runtimeDeployments[].flux` entry, creates a Flux `OCIRepository` (`oci://<registry>/<chart>:<version>`, helm-chart layer) + a `HelmRelease` that installs the chart into the runtime namespace. |
 
 The provider workspace created in step 2 is **empty**. The `wildwest-controller`
 chart's **init container** (`init.enabled: true`) bootstraps the workspace content —
@@ -58,7 +58,7 @@ Published artifacts the manifest references:
 > on every `v*` tag (via `make helm-push`). CI versions all release artifacts from the git
 > tag (`VERSION = ${tag#v}`), so the chart version equals the release tag — latest is
 > `v0.0.7`. (The internal `deploy/helm/*/Chart.yaml` version is overridden at publish
-> time.) If you publish elsewhere, update `registry` / `componentName` / `version` in
+> time.) If you publish elsewhere, update `registry` / `chart` / `version` in
 > [`managedprovider.yaml`](./managedprovider.yaml) accordingly.
 
 ## Configure the front-proxy IP (required)
