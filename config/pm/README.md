@@ -46,6 +46,7 @@ Published artifacts the manifest references:
 - OCI **Helm charts** at (version tracks the release tag — latest is `v0.0.7`):
   - `oci://ghcr.io/platform-mesh/provider-quickstart/charts/wildwest-controller:0.0.7`
   - `oci://ghcr.io/platform-mesh/provider-quickstart/charts/wildwest-portal:0.0.7`
+  - `oci://ghcr.io/platform-mesh/provider-quickstart/charts/wildwest-armament-sync:0.0.7`
 - The chart `values.image.tag` digests resolve from `ghcr.io/platform-mesh/provider-quickstart*`.
 
 > **Publishing note.** The operator's `Deploy` subroutine consumes **plain OCI Helm
@@ -102,8 +103,9 @@ kubectl get secret wildwest-provider-kubeconfig -n platform-mesh-system
 # Flux objects emitted by the Deploy subroutine
 kubectl get ocirepository,helmrelease -n platform-mesh-system
 
-# Workloads
-kubectl get pods -n platform-mesh-system -l app.kubernetes.io/name=wildwest-controller
+# Workloads (controller, portal, armament syncer)
+kubectl get pods -n platform-mesh-system \
+  -l 'app.kubernetes.io/name in (wildwest-controller,wildwest-portal,wildwest-armament-sync)'
 ```
 
 ## Tear down

@@ -97,6 +97,33 @@ spec:
           #     hostAliases:
           #       enabled: true
 
+    # ---- Wild West armament syncer -------------------------------------------
+    # Replicates an external armament catalog into the provider workspace as
+    # Armament CRs. Connects to kcp via the provider workspace kubeconfig
+    # (KUBECONFIG=/etc/kcp/kubeconfig), so it needs the same kubeconfig + hostAliases
+    # wiring as the controller.
+    - ocm:
+        componentName: wildwest-armament-sync
+        registry: ghcr.io/platform-mesh/provider-quickstart/charts
+        version: "0.0.7"
+        values:
+          # Chart default is wildwest-controller-kubeconfig; under ManagedProvider the
+          # operator copies the provider kubeconfig as wildwest-provider-kubeconfig.
+          kubeconfig:
+            secretName: wildwest-provider-kubeconfig
+            secretKey: kubeconfig
+          syncer:
+            interval: 30s
+          # Same kcp front-proxy pinning as the controller; IP set via kustomize patch.
+          hostAliases:
+            enabled: true
+            entries:
+              - ip: "127.0.0.1" # PLACEHOLDER - overridden by kustomization.yaml patch
+                hostnames:
+                  - root.kcp.localhost
+                  - kcp.localhost
+                  - localhost
+
   # ---- Optional overrides -----------------------------------------------------
   # Override the kcp front-proxy host written into the generated kubeconfig:
   # providerHostOverride: https://frontproxy-front-proxy.platform-mesh-system:8443

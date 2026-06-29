@@ -28,3 +28,6 @@ patches:
       - op: replace
         path: /spec/runtimeDeployments/0/ocm/values/hostAliases/entries/0/ip
         value: "10.96.188.4"
+      - op: replace
+        path: /spec/runtimeDeployments/2/ocm/values/hostAliases/entries/0/ip
+        value: "10.96.188.4"
