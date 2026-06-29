@@ -43,9 +43,10 @@ On the **runtime cluster**:
 
 Published artifacts the manifest references:
 
-- OCI **Helm charts** at (version tracks the release tag — latest is `v0.0.6`):
-  - `oci://ghcr.io/platform-mesh/provider-quickstart/charts/wildwest-controller:0.0.6`
-  - `oci://ghcr.io/platform-mesh/provider-quickstart/charts/wildwest-portal:0.0.6`
+- OCI **Helm charts** at (version tracks the release tag — latest is `v0.0.7`):
+  - `oci://ghcr.io/platform-mesh/provider-quickstart/charts/wildwest-controller:0.0.7`
+  - `oci://ghcr.io/platform-mesh/provider-quickstart/charts/wildwest-portal:0.0.7`
+  - `oci://ghcr.io/platform-mesh/provider-quickstart/charts/wildwest-armament-sync:0.0.7`
 - The chart `values.image.tag` digests resolve from `ghcr.io/platform-mesh/provider-quickstart*`.
 
 > **Publishing note.** The operator's `Deploy` subroutine consumes **plain OCI Helm
@@ -56,9 +57,28 @@ Published artifacts the manifest references:
 > the `publish-helm` job in [`build-images.yaml`](../../.github/workflows/build-images.yaml)
 > on every `v*` tag (via `make helm-push`). CI versions all release artifacts from the git
 > tag (`VERSION = ${tag#v}`), so the chart version equals the release tag — latest is
-> `v0.0.6`. (The internal `deploy/helm/*/Chart.yaml` version is overridden at publish
+> `v0.0.7`. (The internal `deploy/helm/*/Chart.yaml` version is overridden at publish
 > time.) If you publish elsewhere, update `registry` / `componentName` / `version` in
 > [`managedprovider.yaml`](./managedprovider.yaml) accordingly.
+
+## Configure the front-proxy IP (required)
+
+kcp advertises the provider's APIExport virtual-workspace endpoint as
+`https://root.kcp.localhost:8443/...`. Inside the controller pod that hostname
+resolves to `127.0.0.1`, so the controller's endpoint watcher fails with
+`dial tcp 127.0.0.1:8443: connect: connection refused`. To fix this the chart
+pins those hostnames to the front-proxy service ClusterIP via `hostAliases`.
+
+This is the **one value you must set for your cluster**. Find the IP:
+
+```bash
+kubectl -n platform-mesh-system get svc frontproxy-front-proxy \
+  -o jsonpath='{.spec.clusterIP}'
+```
+
+and set it in [`kustomization.yaml`](./kustomization.yaml) (the `patches:` entry,
+`value:`). The IP is stable for the lifetime of the service; update it if the
+front-proxy Service is recreated.
 
 ## Apply
 
@@ -83,8 +103,9 @@ kubectl get secret wildwest-provider-kubeconfig -n platform-mesh-system
 # Flux objects emitted by the Deploy subroutine
 kubectl get ocirepository,helmrelease -n platform-mesh-system
 
-# Workloads
-kubectl get pods -n platform-mesh-system -l app.kubernetes.io/name=wildwest-controller
+# Workloads (controller, portal, armament syncer)
+kubectl get pods -n platform-mesh-system \
+  -l 'app.kubernetes.io/name in (wildwest-controller,wildwest-portal,wildwest-armament-sync)'
 ```
 
 ## Tear down

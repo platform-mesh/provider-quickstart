@@ -5,3 +5,29 @@ kind: Kustomization
 namespace: platform-mesh-system
 resources:
   - managedprovider.yaml
+
+# ---------------------------------------------------------------------------
+# Front-proxy IP for kcp hostAliases (environment-specific).
+#
+# kcp advertises the APIExport virtual-workspace endpoint as
+# https://root.kcp.localhost:8443/... which resolves to 127.0.0.1 inside the
+# controller pod. We pin those hostnames to the front-proxy service ClusterIP so
+# the controller can reach the virtual workspace.
+#
+# Set the IP for your cluster (it is the only value you should need to edit):
+#   kubectl -n platform-mesh-system get svc frontproxy-front-proxy \
+#     -o jsonpath='{.spec.clusterIP}'
+# ---------------------------------------------------------------------------
+patches:
+  - target:
+      group: providers.platform-mesh.io
+      version: v1alpha1
+      kind: ManagedProvider
+      name: wildwest
+    patch: |
+      - op: replace
+        path: /spec/runtimeDeployments/0/ocm/values/hostAliases/entries/0/ip
+        value: "10.96.188.4"
+      - op: replace
+        path: /spec/runtimeDeployments/2/ocm/values/hostAliases/entries/0/ip
+        value: "10.96.188.4"
