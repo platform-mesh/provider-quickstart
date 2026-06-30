@@ -21,6 +21,13 @@ components:
           type: helm
           path: ../deploy/helm/wildwest-portal
           version: {{ .CHART_VERSION }}
+      - name: armament-sync-chart
+        type: helmChart
+        version: {{ .CHART_VERSION }}
+        input:
+          type: helm
+          path: ../deploy/helm/wildwest-armament-sync
+          version: {{ .CHART_VERSION }}
       - name: controller-image
         type: ociImage
         relation: local
@@ -35,6 +42,13 @@ components:
         access:
           type: ociArtifact
           imageReference: ghcr.io/platform-mesh/provider-quickstart-portal:{{ .OCI_TAG }}
+      - name: armament-sync-image
+        type: ociImage
+        relation: local
+        version: {{ .IMAGE_VERSION }}
+        access:
+          type: ociArtifact
+          imageReference: ghcr.io/platform-mesh/provider-quickstart-armament-sync:{{ .OCI_TAG }}
       - name: kcp-manifests
         type: directoryTree
         version: {{ .VERSION }}
