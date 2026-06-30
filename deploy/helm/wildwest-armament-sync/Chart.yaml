@@ -2,7 +2,7 @@ apiVersion: v2
 name: wildwest-armament-sync
 description: Armament catalog syncer for the Wild West provider — replicates an external armament source into the provider workspace as Armament CRs.
 type: application
-version: 0.1.1
+version: 0.0.9
 appVersion: "0.1.0"
 dependencies:
   - name: common

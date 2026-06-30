@@ -37,7 +37,7 @@ spec:
     - flux:
         chart: wildwest-controller
         registry: ghcr.io/platform-mesh/provider-quickstart/charts
-        version: "0.0.8"
+        version: "0.0.9"
         values:
           # Provider-workspace kubeconfig copied in by the operator
           # (defaults to <ManagedProvider.name>-provider-kubeconfig / key "kubeconfig").
@@ -78,7 +78,7 @@ spec:
     - flux:
         chart: wildwest-portal
         registry: ghcr.io/platform-mesh/provider-quickstart/charts
-        version: "0.0.8"
+        version: "0.0.9"
         # Portal needs no kubeconfig. Expose it through the platform Gateway.
         # These values are passed verbatim into the HelmRelease; the chart defaults
         # already match the platform-mesh-system Gateway / CORS setup, so enabling the
@@ -105,7 +105,7 @@ spec:
     - flux:
         chart: wildwest-armament-sync
         registry: ghcr.io/platform-mesh/provider-quickstart/charts
-        version: "0.0.8"
+        version: "0.0.9"
         values:
           # Chart default is wildwest-controller-kubeconfig; under ManagedProvider the
           # operator copies the provider kubeconfig as wildwest-provider-kubeconfig.

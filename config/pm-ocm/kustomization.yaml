@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# Apply against the runtime cluster where the platform-mesh-operator runs:
+#   kubectl apply -k config/pm-ocm
+#
+# OCM variant of config/pm — deploys the controller + portal via OCM component
+# resolution (and the armament syncer via Flux). The OCM Repository/Component/Resource
+# objects are created by the operator from the inline ocm: coordinates, so nothing extra
+# is shipped here.
+namespace: platform-mesh-system
+resources:
+  - managedprovider.yaml
+
+# ---------------------------------------------------------------------------
+# Front-proxy IP for kcp hostAliases (environment-specific) — same as config/pm.
+#   kubectl -n platform-mesh-system get svc frontproxy-front-proxy \
+#     -o jsonpath='{.spec.clusterIP}'
+# ---------------------------------------------------------------------------
+patches:
+  - target:
+      group: providers.platform-mesh.io
+      version: v1alpha1
+      kind: ManagedProvider
+      name: wildwest
+    patch: |
+      - op: replace
+        path: /spec/runtimeDeployments/0/ocm/values/hostAliases/entries/0/ip
+        value: "10.96.188.4"
+      - op: replace
+        path: /spec/runtimeDeployments/2/flux/values/hostAliases/entries/0/ip
+        value: "10.96.188.4"
