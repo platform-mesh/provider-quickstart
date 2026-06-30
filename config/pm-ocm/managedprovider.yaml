@@ -36,7 +36,7 @@ spec:
         name: wildwest-controller
         registry: ghcr.io/platform-mesh                        # → operator creates the Repository
         component: github.com/platform-mesh/provider-quickstart # → operator creates the Component
-        version: "0.0.9"
+        version: "0.0.11"
         resourceName: controller-chart                          # which resource in the component
         values:
           kubeconfig:
@@ -65,7 +65,7 @@ spec:
         name: wildwest-portal
         registry: ghcr.io/platform-mesh
         component: github.com/platform-mesh/provider-quickstart
-        version: "0.0.9"
+        version: "0.0.11"
         resourceName: portal-chart
         values:
           httpRoute:
@@ -73,13 +73,14 @@ spec:
           middleware:
             enabled: true
 
-    # ---- Wild West armament syncer (via Flux) --------------------------------
-    # The armament syncer chart is NOT part of the OCM component, so it is deployed
-    # directly from its Helm OCI chart via `flux:` (the two sources coexist freely).
-    - flux:
-        chart: wildwest-armament-sync
-        registry: ghcr.io/platform-mesh/provider-quickstart/charts
-        version: "0.0.9"
+    # ---- Wild West armament syncer (via OCM) ---------------------------------
+    # Resolves the `armament-sync-chart` resource of the same OCM component.
+    - ocm:
+        name: wildwest-armament-sync
+        registry: ghcr.io/platform-mesh
+        component: github.com/platform-mesh/provider-quickstart
+        version: "0.0.11"
+        resourceName: armament-sync-chart
         values:
           kubeconfig:
             secretName: wildwest-provider-kubeconfig

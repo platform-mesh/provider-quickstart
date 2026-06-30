@@ -3,10 +3,10 @@ kind: Kustomization
 # Apply against the runtime cluster where the platform-mesh-operator runs:
 #   kubectl apply -k config/pm-ocm
 #
-# OCM variant of config/pm — deploys the controller + portal via OCM component
-# resolution (and the armament syncer via Flux). The OCM Repository/Component/Resource
-# objects are created by the operator from the inline ocm: coordinates, so nothing extra
-# is shipped here.
+# OCM variant of config/pm — deploys the controller, portal, and armament syncer
+# via OCM component resolution. The OCM Repository/Component/Resource objects are
+# created by the operator from the inline ocm: coordinates, so nothing extra is
+# shipped here.
 namespace: platform-mesh-system
 resources:
   - managedprovider.yaml
@@ -27,5 +27,5 @@ patches:
         path: /spec/runtimeDeployments/0/ocm/values/hostAliases/entries/0/ip
         value: "10.96.188.4"
       - op: replace
-        path: /spec/runtimeDeployments/2/flux/values/hostAliases/entries/0/ip
+        path: /spec/runtimeDeployments/2/ocm/values/hostAliases/entries/0/ip
         value: "10.96.188.4"
