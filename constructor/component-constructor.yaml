@@ -10,12 +10,17 @@ components:
         input:
           type: helm
           path: ../deploy/helm/wildwest-controller
+          # Override the chart's Chart.yaml version so the packaged OCI artifact is
+          # tagged from the build tag (CHART_VERSION), not the hardcoded Chart.yaml
+          # value. Keeps the OCM artifact tag in lockstep with the resource version.
+          version: {{ .CHART_VERSION }}
       - name: portal-chart
         type: helmChart
         version: {{ .CHART_VERSION }}
         input:
           type: helm
           path: ../deploy/helm/wildwest-portal
+          version: {{ .CHART_VERSION }}
       - name: controller-image
         type: ociImage
         relation: local

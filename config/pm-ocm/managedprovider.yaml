@@ -1,0 +1,96 @@
+# ManagedProvider — OCM variant of config/pm/managedprovider.yaml.
+#
+# This is an ALTERNATIVE to config/pm. Apply ONE of the two, not both (they share the
+# ManagedProvider name "wildwest" in platform-mesh-system).
+#
+# Difference from config/pm: the controller and portal are deployed via the `ocm:`
+# source instead of `flux:`. The OCM coordinates are given inline; the operator creates
+# the delivery.ocm.software Repository, Component and Resource objects, the ocm-controller
+# resolves the component descriptor (signatures, references, relocation) and the resolved
+# chart artifact is then deployed via Flux (OCIRepository + HelmRelease). You do NOT ship
+# any Repository/Component CRs by hand — the operator manages them.
+#
+# Lifecycle (WaitPlatformMesh → ProviderResource → WaitProvider → KubeconfigCopy →
+# Deploy) is identical to config/pm; only the Deploy resolution differs.
+#
+# Prerequisite: the ocm-controller (ocm-k8s-toolkit) must be installed in the runtime
+# cluster, and the OCM component must be published first via `make ocm-push`.
+apiVersion: providers.platform-mesh.io/v1alpha1
+kind: ManagedProvider
+metadata:
+  name: wildwest
+  namespace: platform-mesh-system
+spec:
+  platformMeshRef:
+    name: platform-mesh
+
+  cleanupOnDelete: false
+
+  runtimeDeployments:
+    # ---- Wild West controller (via OCM) --------------------------------------
+    # Resolves the `controller-chart` resource of the provider-quickstart OCM
+    # component. `name` sets the generated Repository/Component/Resource/OCIRepository/
+    # HelmRelease name (required here so controller and portal — which share the same
+    # component name — don't collide).
+    - ocm:
+        name: wildwest-controller
+        registry: ghcr.io/platform-mesh                        # → operator creates the Repository
+        component: github.com/platform-mesh/provider-quickstart # → operator creates the Component
+        version: "0.0.9"
+        resourceName: controller-chart                          # which resource in the component
+        values:
+          kubeconfig:
+            secretName: wildwest-provider-kubeconfig
+            secretKey: kubeconfig
+          controller:
+            endpointSlice: wildwest.platform-mesh.io
+          init:
+            enabled: true
+            kubeconfig:
+              secretName: wildwest-provider-kubeconfig
+              secretKey: kubeconfig
+            seedWorkspaces: false
+          hostAliases:
+            enabled: true
+            entries:
+              - ip: "127.0.0.1" # PLACEHOLDER - overridden by kustomization.yaml patch
+                hostnames:
+                  - root.kcp.localhost
+                  - kcp.localhost
+                  - localhost
+
+    # ---- Wild West portal (via OCM) ------------------------------------------
+    # Resolves the `portal-chart` resource of the same OCM component.
+    - ocm:
+        name: wildwest-portal
+        registry: ghcr.io/platform-mesh
+        component: github.com/platform-mesh/provider-quickstart
+        version: "0.0.9"
+        resourceName: portal-chart
+        values:
+          httpRoute:
+            enabled: true
+          middleware:
+            enabled: true
+
+    # ---- Wild West armament syncer (via Flux) --------------------------------
+    # The armament syncer chart is NOT part of the OCM component, so it is deployed
+    # directly from its Helm OCI chart via `flux:` (the two sources coexist freely).
+    - flux:
+        chart: wildwest-armament-sync
+        registry: ghcr.io/platform-mesh/provider-quickstart/charts
+        version: "0.0.9"
+        values:
+          kubeconfig:
+            secretName: wildwest-provider-kubeconfig
+            secretKey: kubeconfig
+          syncer:
+            interval: 30s
+          hostAliases:
+            enabled: true
+            entries:
+              - ip: "127.0.0.1" # PLACEHOLDER - overridden by kustomization.yaml patch
+                hostnames:
+                  - root.kcp.localhost
+                  - kcp.localhost
+                  - localhost
