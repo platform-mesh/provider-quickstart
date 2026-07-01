@@ -84,7 +84,7 @@ front-proxy Service is recreated.
 
 ```bash
 # kube context / KUBECONFIG must point at the runtime cluster running the operator
-kubectl apply -k config/pm
+kubectl apply -k config/platfrom-mesh-flux
 ```
 
 ## Observe
@@ -111,7 +111,7 @@ kubectl get pods -n platform-mesh-system \
 ## Tear down
 
 ```bash
-kubectl delete -k config/pm
+kubectl delete -k config/platfrom-mesh-flux
 ```
 
 Set `spec.cleanupOnDelete: true` in [`managedprovider.yaml`](./managedprovider.yaml)

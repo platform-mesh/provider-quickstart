@@ -1,19 +1,19 @@
-# `config/pm-ocm` — ManagedProvider via OCM
+# `config/platfrom-mesh-ocm` — ManagedProvider via OCM
 
-OCM variant of [`config/pm`](../pm). Deploys the same Wild West provider, but the
+OCM variant of [`config/platfrom-mesh-flux`](../platfrom-mesh-flux). Deploys the same Wild West provider, but the
 **controller** and **portal** are sourced from the published **OCM component**
 `github.com/platform-mesh/provider-quickstart` instead of directly from Helm OCI charts.
 
 ```sh
-kubectl apply -k config/pm-ocm
+kubectl apply -k config/platfrom-mesh-ocm
 ```
 
-> Apply **either** `config/pm` **or** `config/pm-ocm`, not both — they share the
+> Apply **either** `config/platfrom-mesh-flux` **or** `config/platfrom-mesh-ocm`, not both — they share the
 > ManagedProvider `wildwest` in `platform-mesh-system`.
 
 ## What's different
 
-| | `config/pm` (`flux:`) | `config/pm-ocm` (`ocm:`) |
+| | `config/platfrom-mesh-flux` (`flux:`) | `config/platfrom-mesh-ocm` (`ocm:`) |
 |---|---|---|
 | Source | Helm OCI chart, pulled directly | OCM component descriptor, resolved by the ocm-controller |
 | Operator emits | `OCIRepository` + `HelmRelease` | `Repository` + `Component` + `Resource` → (resolved) `OCIRepository` + `HelmRelease` |
