@@ -121,6 +121,7 @@ spec:
               - ip: "127.0.0.1" # PLACEHOLDER - overridden by kustomization.yaml patch
                 hostnames:
                   - root.kcp.localhost
+                  - triton.kcp.localhost
                   - kcp.localhost
                   - localhost
 

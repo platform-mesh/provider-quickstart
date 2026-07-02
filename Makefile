@@ -237,15 +237,19 @@ HELM_CHARTS ?= wildwest-controller wildwest-portal wildwest-armament-sync
 # Defaults to "latest" so local builds resolve against an existing tag; CI sets it to the release tag.
 OCI_TAG ?= latest
 
-## ocm-stamp-chart-versions: Stamp each deployable chart's Chart.yaml version to CHART_VERSION
-# OCM's `input: type: helm` embeds the chart's on-disk Chart.yaml version into the packaged
-# artifact. Flux's HelmRelease then rejects the chart unless that internal version equals the
-# OCI tag. Stamp the version from the build tag here so it propagates instead of being hardcoded.
+## ocm-stamp-chart-versions: Stamp each deployable chart's Chart.yaml version + appVersion
+# OCM's `input: type: helm` embeds the chart's on-disk Chart.yaml into the packaged artifact,
+# so both fields must be stamped from the build tag here (unlike helm-push, which passes
+# --version/--app-version on the CLI):
+#   - version: Flux's HelmRelease rejects the chart unless this equals the OCI tag.
+#   - appVersion: charts that leave image.tag empty (e.g. wildwest-armament-sync) fall back to
+#     .Chart.AppVersion for the image tag; without this stamp the OCM path pulls the hardcoded
+#     0.1.0 (which is never published) instead of the release tag.
 .PHONY: ocm-stamp-chart-versions
 ocm-stamp-chart-versions:
 	@for chart in $(HELM_CHARTS); do \
-	  echo "==> stamping deploy/helm/$$chart/Chart.yaml version=$(CHART_VERSION)"; \
-	  yq -i '.version = "$(CHART_VERSION)"' deploy/helm/$$chart/Chart.yaml || exit 1; \
+	  echo "==> stamping deploy/helm/$$chart/Chart.yaml version=$(CHART_VERSION) appVersion=$(IMAGE_VERSION)"; \
+	  yq -i '.version = "$(CHART_VERSION)" | .appVersion = "$(IMAGE_VERSION)"' deploy/helm/$$chart/Chart.yaml || exit 1; \
 	done
 
 ## ocm-build: Build OCM component archive (CTF) from constructor/component-constructor.yaml

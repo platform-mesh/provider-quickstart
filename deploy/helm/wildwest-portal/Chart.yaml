@@ -2,8 +2,8 @@ apiVersion: v2
 name: wildwest-portal
 description: Wild West Portal - Angular UI for KCP
 type: application
-version: 0.0.11
-appVersion: "0.1.0"
+version: 0.0.0-dev
+appVersion: "0.0.0-dev"
 sources:
   - https://github.com/platform-mesh/provider-quickstart
 dependencies:
