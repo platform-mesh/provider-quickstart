@@ -36,7 +36,7 @@ spec:
         name: wildwest-controller
         registry: ghcr.io/platform-mesh                        # → operator creates the Repository
         component: github.com/platform-mesh/provider-quickstart # → operator creates the Component
-        version: "0.0.12"
+        version: "0.0.13"
         resourceName: controller-chart                          # which resource in the component
         values:
           kubeconfig:
@@ -66,7 +66,7 @@ spec:
         name: wildwest-portal
         registry: ghcr.io/platform-mesh
         component: github.com/platform-mesh/provider-quickstart
-        version: "0.0.12"
+        version: "0.0.13"
         resourceName: portal-chart
         values:
           httpRoute:
@@ -80,7 +80,7 @@ spec:
         name: wildwest-armament-sync
         registry: ghcr.io/platform-mesh
         component: github.com/platform-mesh/provider-quickstart
-        version: "0.0.12"
+        version: "0.0.13"
         resourceName: armament-sync-chart
         values:
           kubeconfig:
@@ -94,5 +94,6 @@ spec:
               - ip: "127.0.0.1" # PLACEHOLDER - overridden by kustomization.yaml patch
                 hostnames:
                   - root.kcp.localhost
+                  - triton.kcp.localhost
                   - kcp.localhost
                   - localhost
