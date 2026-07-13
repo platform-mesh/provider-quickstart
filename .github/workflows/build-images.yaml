@@ -11,25 +11,31 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: read # Baseline for actions/checkout; elevated scopes are granted per-job
+
+concurrency:
+  group: build-images-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-controller:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      packages: write
+      contents: read # Needed for actions/checkout
+      packages: write # Needed to push images and OCM/Helm artifacts to GHCR
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4
+        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4.1.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
       - name: Log in to GHCR
-        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -37,7 +43,7 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
         with:
           images: ghcr.io/platform-mesh/provider-quickstart
           tags: |
@@ -49,7 +55,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push
-        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: .
           file: deploy/Dockerfile
@@ -67,19 +73,21 @@ jobs:
   build-portal:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      packages: write
+      contents: read # Needed for actions/checkout
+      packages: write # Needed to push images and OCM/Helm artifacts to GHCR
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4
+        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4.1.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
       - name: Log in to GHCR
-        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -87,7 +95,7 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
         with:
           images: ghcr.io/platform-mesh/provider-quickstart-portal
           tags: |
@@ -99,7 +107,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push
-        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: .
           file: deploy/portal.Dockerfile
@@ -113,19 +121,21 @@ jobs:
   build-armament-sync:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      packages: write
+      contents: read # Needed for actions/checkout
+      packages: write # Needed to push images and OCM/Helm artifacts to GHCR
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4
+        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4.1.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
       - name: Log in to GHCR
-        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -133,7 +143,7 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
         with:
           images: ghcr.io/platform-mesh/provider-quickstart-armament-sync
           tags: |
@@ -145,7 +155,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push
-        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: .
           file: deploy/armament-sync.Dockerfile
@@ -165,10 +175,12 @@ jobs:
     needs: [build-controller, build-portal, build-armament-sync]
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
-      contents: read
-      packages: write
+      contents: read # Needed for actions/checkout
+      packages: write # Needed to push images and OCM/Helm artifacts to GHCR
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
 
       - name: Install OCM CLI
         run: |
@@ -180,6 +192,8 @@ jobs:
           sudo install -m 0755 ocm /usr/local/bin/ocm
 
       - name: Configure OCM credentials for GHCR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p "$HOME"
           cat > "$HOME/.ocmconfig" <<EOF
@@ -195,8 +209,8 @@ jobs:
                   credentials:
                     - type: Credentials
                       properties:
-                        username: ${{ github.actor }}
-                        password: ${{ secrets.GITHUB_TOKEN }}
+                        username: ${GITHUB_ACTOR}
+                        password: ${GITHUB_TOKEN}
           EOF
 
       - name: Resolve version from tag
@@ -207,30 +221,36 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push OCM component
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           make ocm-push \
-            VERSION=${{ steps.version.outputs.version }} \
-            CHART_VERSION=${{ steps.version.outputs.version }} \
-            IMAGE_VERSION=${{ steps.version.outputs.version }} \
-            OCI_TAG=${{ steps.version.outputs.version }}
+            VERSION=${VERSION} \
+            CHART_VERSION=${VERSION} \
+            IMAGE_VERSION=${VERSION} \
+            OCI_TAG=${VERSION}
 
   publish-helm:
     runs-on: ubuntu-latest
     needs: [build-controller, build-portal, build-armament-sync]
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
-      contents: read
-      packages: write
+      contents: read # Needed for actions/checkout
+      packages: write # Needed to push images and OCM/Helm artifacts to GHCR
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
 
       - name: Set up Helm
         uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
 
       - name: Log in to GHCR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | \
-            helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
+          echo "${GITHUB_TOKEN}" | \
+            helm registry login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
 
       - name: Resolve version from tag
         id: version
@@ -240,7 +260,9 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Package and push Helm charts
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           make helm-push \
-            CHART_VERSION=${{ steps.version.outputs.version }} \
-            IMAGE_VERSION=${{ steps.version.outputs.version }}
+            CHART_VERSION=${VERSION} \
+            IMAGE_VERSION=${VERSION}
