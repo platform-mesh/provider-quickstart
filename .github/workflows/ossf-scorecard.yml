@@ -7,13 +7,13 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: read # Baseline for actions/checkout; elevated scopes are granted per-job
 
 jobs:
   scorecard:
     uses: platform-mesh/.github/.github/workflows/job-ossf-scorecard.yml@9ddacafbe3260312cb1cc3f9974ad2fece8effe0
     permissions:
-      security-events: write
-      id-token: write
-      contents: read
-      actions: read
+      security-events: write # Needed to upload scorecard results to code scanning
+      id-token: write # Needed for keyless (OIDC) publishing of scorecard results
+      contents: read # Needed to read repository contents
+      actions: read # Needed to read GitHub Actions workflows
