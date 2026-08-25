@@ -17,25 +17,21 @@ import { Component, CUSTOM_ELEMENTS_SCHEMA, effect, inject, signal } from '@angu
 import { toSignal } from '@angular/core/rxjs-interop';
 import * as LuigiClient from '@luigi-project/client';
 import { ILuigiContextTypes, LuigiContextService } from '@luigi-project/client-support-angular';
-import {
-  AvatarComponent,
-  ButtonComponent,
-  DialogComponent,
-  DynamicPageComponent,
-  DynamicPageHeaderComponent,
-  DynamicPageTitleComponent,
-  IconComponent,
-  InputComponent,
-  LabelComponent,
-  OptionComponent,
-  SelectComponent,
-  TextComponent,
-  TitleComponent,
-  ToolbarButtonComponent,
-  ToolbarComponent,
-} from '@ui5/webcomponents-ngx';
-
-// Import UI5 icons used in the template
+import '@ui5/webcomponents/dist/Avatar.js';
+import '@ui5/webcomponents/dist/Button.js';
+import '@ui5/webcomponents/dist/Dialog.js';
+import '@ui5/webcomponents/dist/Icon.js';
+import '@ui5/webcomponents/dist/Input.js';
+import '@ui5/webcomponents/dist/Label.js';
+import '@ui5/webcomponents/dist/Option.js';
+import '@ui5/webcomponents/dist/Select.js';
+import '@ui5/webcomponents/dist/Text.js';
+import '@ui5/webcomponents/dist/Title.js';
+import '@ui5/webcomponents/dist/Toolbar.js';
+import '@ui5/webcomponents/dist/ToolbarButton.js';
+import '@ui5/webcomponents-fiori/dist/DynamicPage.js';
+import '@ui5/webcomponents-fiori/dist/DynamicPageHeader.js';
+import '@ui5/webcomponents-fiori/dist/DynamicPageTitle.js';
 import '@ui5/webcomponents-icons/dist/accept.js';
 import '@ui5/webcomponents-icons/dist/add.js';
 import '@ui5/webcomponents-icons/dist/calendar.js';
@@ -50,23 +46,7 @@ import { Armament, Cowboy, CowboysService } from './cowboys.service';
 @Component({
   selector: 'app-cowboys',
   standalone: true,
-  imports: [
-    DynamicPageComponent,
-    DynamicPageTitleComponent,
-    DynamicPageHeaderComponent,
-    AvatarComponent,
-    TitleComponent,
-    LabelComponent,
-    TextComponent,
-    ToolbarComponent,
-    ToolbarButtonComponent,
-    IconComponent,
-    InputComponent,
-    ButtonComponent,
-    DialogComponent,
-    SelectComponent,
-    OptionComponent,
-  ],
+  imports: [],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './cowboys.component.html',
   styleUrl: './cowboys.component.scss',
