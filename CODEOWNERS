@@ -1,3 +1,5 @@
-* @platform-mesh/kube
+* @platform-mesh/go-maintainers
+
+# ownerless so renovate can auto-merge updates
 go.mod
 go.sum
