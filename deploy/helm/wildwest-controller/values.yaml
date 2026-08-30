@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: ghcr.io/platform-mesh/provider-quickstart
   pullPolicy: IfNotPresent
-  tag: "@sha256:36b32c4ae18248624082f7efcd627a811f00d08b112ff4be3afebb40fd41c545"
+  tag: "@sha256:964e09a76d5d7e98e9add2dd87dc7eb1a8a59f50771840a5dc88172edbb4fe00"
 
 imagePullSecrets: []
 nameOverride: ""
