@@ -98,18 +98,18 @@
                 </span>
               </div>
               @if (cowboy.spec.armamentRef?.name) {
-                @let armament = armamentFor(cowboy.spec.armamentRef?.name);
+                @let armament = armamentFor(cowboy.spec.armamentRef.name);
                 <div class="tile-field tile-field--stack">
                   <ui5-label>Armament</ui5-label>
                   <div class="armament-chip" [class.armament-chip--missing]="!armament">
                     <ui5-icon name="add" class="armament-icon"></ui5-icon>
                     <div class="armament-text">
-                      <span class="armament-name">{{ armament?.spec?.displayName || cowboy.spec.armamentRef?.name }}</span>
-                      @if (armament?.spec?.kind || armament?.spec?.damage || armament?.spec?.range) {
+                      <span class="armament-name">{{ armament?.spec.displayName || cowboy.spec.armamentRef.name }}</span>
+                      @if (armament?.spec.kind || armament?.spec.damage || armament?.spec.range) {
                         <span class="armament-meta">
-                          @if (armament?.spec?.kind) { {{ armament?.spec?.kind }} }
-                          @if (armament?.spec?.damage) { · dmg {{ armament?.spec?.damage }} }
-                          @if (armament?.spec?.range) { · rng {{ armament?.spec?.range }}m }
+                          @if (armament?.spec.kind) { {{ armament?.spec.kind }} }
+                          @if (armament?.spec.damage) { · dmg {{ armament?.spec.damage }} }
+                          @if (armament?.spec.range) { · rng {{ armament?.spec.range }}m }
                         </span>
                       } @else if (!armament) {
                         <span class="armament-meta">not in catalog</span>
