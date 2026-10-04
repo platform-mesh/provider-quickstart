@@ -6,7 +6,7 @@ image:
   # Empty -> falls back to the chart appVersion. CI packages the chart with
   # --app-version=<release tag> (matching the image tag pushed by the
   # build-armament-sync job), so the published chart pulls the matching image.
-  tag: "@sha256:760852a819914390ae59039b16108fd79da7de08b7630a2e648d063607340afd"
+  tag: "@sha256:1c2e17e89fbfeb7864e8e7af205124524ae58273e5ae5e92da64d3b4748f98f1"
 
 imagePullSecrets: []
 nameOverride: ""
