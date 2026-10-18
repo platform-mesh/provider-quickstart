@@ -2,9 +2,9 @@ apiVersion: v2
 name: wildwest-armament-sync
 description: Armament catalog syncer for the Wild West provider — replicates an external armament source into the provider workspace as Armament CRs.
 type: application
-version: 0.0.2
+version: 0.0.3
 appVersion: "0.0.0-dev"
 dependencies:
   - name: common
-    version: 0.15.1
+    version: 0.16.0
     repository: oci://ghcr.io/platform-mesh/helm-charts
