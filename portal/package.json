@@ -41,7 +41,7 @@
     "@angular/build": "22.2.3",
     "@angular/cli": "22.2.3",
     "@angular/compiler-cli": "22.2.3",
-    "@luigi-project/testing-utilities": "^2.31.0",
+    "@luigi-project/testing-utilities": "2.31.0",
     "@types/jasmine": "6.0.0",
     "jasmine-core": "7.0.2",
     "karma": "6.4.4",
