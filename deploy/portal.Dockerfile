@@ -1,4 +1,4 @@
-FROM node:24.21@sha256:64af3819f9275802414d7cdc38c27e9d82bd564dec4d4da87d008255d36c63b4 AS build
+FROM node:24.22@sha256:9d266751ca3d7fdbe651c878ffd5ad0a42fed49a18c283509267c97f025b7496 AS build
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ COPY portal/ .
 # Build the Angular application for production
 RUN npm run build
 
-FROM nginx:alpine@sha256:8b1e78743a03dbb2c95171cc58639fef29abc8816598e27fb910ed2e621e589a
+FROM nginx:alpine@sha256:fb4658584bd9a916ffb6f6e365f97c25cfdb2923801f551ea08356e695f14ff7
 # Angular 17+ outputs to dist/portal/browser
 # Remove default nginx content and copy our app to root
 RUN rm -rf /usr/share/nginx/html/*
