@@ -1,9 +1,9 @@
 apiVersion: cache.kcp.io/v1alpha1
-kind: CachedResourceEndpointSlice
+kind: ClusterCachedResourceEndpointSlice
 metadata:
   name: armaments
 spec:
-  cachedResource:
+  clusterCachedResource:
     name: armaments
   export:
     name: wildwest.platform-mesh.io

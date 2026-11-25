@@ -39,7 +39,7 @@ spec:
             - --sync-interval={{ .Values.syncer.interval }}
           env:
             - name: KUBECONFIG
-              value: /etc/kcp/kubeconfig
+              value: /etc/kcp/{{ .Values.kubeconfig.secretKey }}
           ports:
             - name: metrics
               containerPort: 9081
@@ -67,11 +67,9 @@ spec:
               readOnly: true
       volumes:
         - name: kubeconfig
+          # The whole Secret: a kubeconfig can read its token from the "token" key next to it.
           secret:
             secretName: {{ .Values.kubeconfig.secretName }}
-            items:
-              - key: {{ .Values.kubeconfig.secretKey }}
-                path: kubeconfig
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
