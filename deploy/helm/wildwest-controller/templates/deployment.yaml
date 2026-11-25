@@ -50,7 +50,7 @@ spec:
             {{- end }}
           env:
             - name: KUBECONFIG
-              value: /etc/kcp-init/kubeconfig
+              value: /etc/kcp-init/{{ .Values.init.kubeconfig.secretKey }}
           volumeMounts:
             - name: init-kubeconfig
               mountPath: /etc/kcp-init
@@ -68,7 +68,7 @@ spec:
             - --endpointslice={{ .Values.controller.endpointSlice }}
           env:
             - name: KUBECONFIG
-              value: /etc/kcp/kubeconfig
+              value: /etc/kcp/{{ .Values.kubeconfig.secretKey }}
           ports:
             - name: metrics
               containerPort: 9080
@@ -96,18 +96,13 @@ spec:
               readOnly: true
       volumes:
         - name: kubeconfig
+          # The whole Secret: a kubeconfig can read its token from the "token" key next to it.
           secret:
             secretName: {{ .Values.kubeconfig.secretName }}
-            items:
-              - key: {{ .Values.kubeconfig.secretKey }}
-                path: kubeconfig
         {{- if .Values.init.enabled }}
         - name: init-kubeconfig
           secret:
             secretName: {{ required "init.kubeconfig.secretName is required when init.enabled is true" .Values.init.kubeconfig.secretName }}
-            items:
-              - key: {{ .Values.init.kubeconfig.secretKey }}
-                path: kubeconfig
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
