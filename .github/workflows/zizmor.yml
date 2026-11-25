@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   zizmor:
-    uses: platform-mesh/.github/.github/workflows/job-zizmor.yml@e5c329452c75be3225c3ec31cf1f6f7b7f44d550 # main
+    uses: platform-mesh/.github/.github/workflows/job-zizmor.yml@e5c329452c75be3225c3ec31cf1f6f7b7f44d550 # main # zizmor: ignore[stale-action-refs]
     with:
       persona: 'auditor'
     permissions:
